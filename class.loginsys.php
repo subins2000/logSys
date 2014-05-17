@@ -21,15 +21,15 @@ ini_set("display_errors", "on");
 
 class LoginSystem{
  /* Start Config */
- private $dbhost = "localhost"; // Host Name
- private $dbport = "3306"; //Port
- private $dbuser = "root"; // MySQL Database Username
- private $dbpass = "backstreetboys"; // MySQL Database Password
- private $dbname = "p"; // Database Name
+ private $dbhost = ""; // Host Name
+ private $dbport = ""; //Port
+ private $dbuser = ""; // MySQL Database Username
+ private $dbpass = ""; // MySQL Database Password
+ private $dbname = ""; // Database Name
  private $dbtable = "users"; // Your Users Table
  
- private $secureKey    = "ckxc436jd*^30f840v*9!@#$"; // A Secure Key For Cookie Encryption. Don't make this public
- private $passwordSalt = "^#$4%9f+1^p9)M@4M)V$"; // Secret Password Salt. Only change once before setting user registration public.
+ private $secureKey    = ""; // A Secure Key For Cookie Encryption. Don't make this public
+ private $passwordSalt = ""; // Secret Password Salt. Only change once before setting user registration public.
  private $company      = "My Site"; // Company for name for including in emails
  var $phpsessionstart  = true; // Should I Start A PHP Session
  var $emailLogin       = true; // Make Login With Username & E-Mail Possible
