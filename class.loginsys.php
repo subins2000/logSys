@@ -229,7 +229,7 @@ class LoginSystem{
      <blockquote>
       <a href='{$this->curPageURL()}?resetPassToken=$token'>Reset Password : $token</a>
      </blockquote>";
-     mail($email, $subject, $body); /* Change mail() function to something else if you like */
+     $this->sendMail($email, $subject, $body); /* Change mail() function to something else if you like */
      $html="<p>An email has been sent to your email inbox with instructions. Check Your Mail Inbox and SPAM Folders.</p><p>You can close this window.</p>";
      echo $html;
      $curStatus="emailSent";
@@ -338,6 +338,9 @@ class LoginSystem{
  }
  public function redirect($url, $status=302){
   header("Location: $url", true, $status);
+ }
+ public function sendMail($email, $subject, $body){
+  mail($email, $subject, $body); /* Change this to something else if you don't like PHP's mail() */
  }
  /* End Extra Tools/Functions */
 }
