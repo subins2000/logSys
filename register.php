@@ -51,7 +51,7 @@ $LS=new LoginSystem();
      echo "Passwords Don't Match","The Passwords you entered didn't match";
      exit;
     }
-    $createAccount=$LS->register($user, $pass, array("email" => $email, "name" => $name));
+    $createAccount=$LS->register($user, $pass, array("email" => $email, "name" => $name, "created" => date("Y-m-d H:i:s"),));
     if($createAccount==="exists"){
      echo "user Exists;";
     }elseif($createAccount===true){
