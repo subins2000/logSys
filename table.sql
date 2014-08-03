@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS `users` (
   `email` tinytext NOT NULL,
   `password` varchar(515) NOT NULL,
   `password_salt` varchar(20) NOT NULL,
-  `name` varchar(30) NOT NULL
+  `name` varchar(30) NOT NULL,
+  `created` datetime NOT NULL
 ) ENGINE=MyISAM  DEFAULT CHARSET=latin1;
 
 --
