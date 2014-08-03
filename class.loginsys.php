@@ -24,14 +24,14 @@ class LoginSystem {
 	/* Start Config */
 
 	private $dbhost 			= "localhost";	// Host Name
-	private $dbport 			= "3306";	//Port
-	private $dbuser 			= "root";	// MySQL Database Username
-	private $dbpass 			= "backstreetboys";	// MySQL Database Password
-	private $dbname 			= "p";	// Database Name
-	private $dbtable 			= "users";	// Your Users Table
+	private $dbport 			= "";	//Port
+	private $dbuser 			= "";	// MySQL Database Username
+	private $dbpass 			= "";	// MySQL Database Password
+	private $dbname 			= "";	// Database Name
+	private $dbtable 			= "";	// Your Users Table
  
-	private $secureKey		= "ckxc436jd*^30f840v*9!@#$";	// A Secure Key For Cookie Encryption. Don't make this	public
-	private $passwordSalt 	= "^#$4%9f+1^p9)M@4M)V$";	// Secret Password Salt. Only change once before setting user registration	public.
+	private $secureKey		= "";	// A Secure Key For Cookie Encryption. Don't make this	public
+	private $passwordSalt 	= "";	// Secret Password Salt. Only change once before setting user registration	public.
 	private $company			= "My Site";	// Company for name for including in emails
 	var $phpsessionstart		= true;	// Should I Start A PHP Session
 	var $emailLogin			= true;	// Make Login With Username & E-Mail Possible
@@ -40,11 +40,11 @@ class LoginSystem {
 		/* Extra Settings - Set the following	variables only if you're going to use $LS->init() */
 		
 		public $staticPages		= array(
-			"/test/logSys/", "/test/logSys/reset.php", "/test/logSys/register.php"
+			"/logSys/register.php"
  		);	// Pages that doesn't require logging in (exclude login page) (but include register page if you want)
  	
-		private $loginPage		= "/test/logSys/login.php"; // The login page. ex : /login.php or /accounts/login.php
-		private $homePage			= "/test/logSys/home.php";	// The home page. The main page for logged in users. Redirects to here when logs in
+		private $loginPage		= "/logSys/login.php"; // The login page. ex : /login.php or /accounts/login.php
+		private $homePage			= "/logSys/home.php";	// The home page. The main page for logged in users. Redirects to here when logs in
 	
 		/* End Extra Settings */
 	
