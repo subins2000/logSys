@@ -320,8 +320,8 @@ class LoginSystem{
   $created = strtotime($LS->getJoined);
   $timeFirst  = strtotime($created);
   $timeSecond = strtotime("now");
-  $memsince = $timeSecond - strtotime($details['created']);
-  $regged = date("n/j/Y", strtotime($details['created']));
+  $memsince = $timeSecond - strtotime($created);
+  $regged = date("n/j/Y", strtotime($created));
   if($memsince < 60)
   {
   	$memfor = $memsince . "Seconds";
