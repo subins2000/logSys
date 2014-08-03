@@ -2,7 +2,7 @@
 /*
 .---------------------------------------------------------------------------.
 |  Software: PHP Login System - PHP logSys                                  |
-|   Version: 0.1                                                            |
+|   Version: 0.2                                                            |
 |   Contact: http://github.com/subins2000/logsys  (also subinsb.com)        |
 |      Info: http://github.com/subins2000/logsys                            |
 |   Support: http://subinsb.com/ask/php-logsys                              |
