@@ -308,6 +308,36 @@ class LoginSystem{
   $sql->execute(array($user));
   return $sql->fetch(PDO::FETCH_ASSOC);
  }
+  public function getJoined($user=null){
+  $sql=$this->dbh->prepare("SELECT `created` FROM {$this->dbtable} WHERE `id`=? ORDER BY id LIMIT 1");
+  $sql->execute(array($user));
+  return $sql->fetch(PDO::FETCH_ASSOC);  
+  }
+  public function timeSinceJoin($user=null){
+  if($user==null){
+   $user=$this->user;
+  }
+  $created = strtotime($LS->getJoined);
+  $timeFirst  = strtotime($created);
+  $timeSecond = strtotime("now");
+  $memsince = $timeSecond - strtotime($details['created']);
+  $regged = date("n/j/Y", strtotime($details['created']));
+  if($memsince < 60)
+  {
+  	$memfor = $memsince . "Seconds";
+  }else if($memsince < 3600 && $memsince > 60){
+      $memfor = floor($memsince / 60) . " Minutes";
+  }else if($memsince < 86400 && $memsince > 60){
+      $memfor = floor($memsince / 3600) . " Hours";
+  }else if($memsince < 604800 && $memsince > 3600){
+      $memfor = floor($memsince / 86400) . " Days";
+  }else if($memsince < 2592000 && $memsince > 86400){
+  	$memfor = floor($memsince / 604800) . " Weeks";
+  }else if($memsince > 604800){
+  	$memfor = floor($memsince / 2592000) . " Months";
+  }
+  return (string)$memfor;
+ }
  /* Extra Tools/Functions */
  public function validEmail($m){
   return !preg_match('/^[a-zA-Z0-9]+[a-zA-Z0-9_.-]+[a-zA-Z0-9_-]+@[a-zA-Z0-9]+[a-zA-Z0-9.-]+[a-zA-Z0-9]+.[a-z]{2,4}$/', $m) ? false:true;
