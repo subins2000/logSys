@@ -39,15 +39,16 @@ class LoginSystem {
 	var $rememberMe			= true;	// Add Remember Me Feature.
 	var $blockBruteForce	= true; // Deny login for $LS->bfTime seconds after incorrect login tries of 5
 	
-		/* Extra Settings - Set the following	variables only if you're going to use $LS->init() */
+		/* Extra Settings */
 		
-		public $staticPages	= array(
-			"/test/logSys/", "/test/logSys/reset.php", "/test/logSys/register.php"
- 		);	// Pages that doesn't require logging in (exclude login page) (but include register page if you want)
+			/* Set the following	variables only if you're going to use $LS->init() */
+			public $staticPages	= array(
+				"/", "/reset.php", "/register.php"
+			);	// Pages that doesn't require logging in (exclude login page) (but include register page if you want)
  	
-		private $loginPage	= "/test/logSys/login.php"; // The login page. ex : /login.php or /accounts/login.php
-		private $homePage	= "/test/logSys/home.php";	// The home page. The main page for logged in users. Redirects to here when logs in
-		public $bfTime		= 300; // The time IN SECONDS for which block from login action should be done after 5 incorrect login attempts. Use http://www.easysurf.cc/utime.htm#m60s for converting minutes to seconds. Default : 5 minutes
+			private $loginPage	= "/login.php"; // The login page. ex : /login.php or /accounts/login.php
+			private $homePage	= "/home.php";	// The home page. The main page for logged in users. Redirects to here when logs in
+			public $bfTime		= 300; // The time IN SECONDS for which block from login action should be done after 5 incorrect login attempts. Use http://www.easysurf.cc/utime.htm#m60s for converting minutes to seconds. Default : 5 minutes
 	
 		/* End Extra Settings */
 	

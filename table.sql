@@ -12,19 +12,23 @@ SET time_zone = "+00:00";
 --
 
 CREATE TABLE IF NOT EXISTS `users` (
-  `id` int(11) NOT NULL,
-  `username` varchar(10) NOT NULL,
-  `email` tinytext NOT NULL,
-  `password` varchar(515) NOT NULL,
-  `password_salt` varchar(20) NOT NULL,
-  `name` varchar(30) NOT NULL,
-  `created` datetime NOT NULL
-) ENGINE=MyISAM  DEFAULT CHARSET=latin1;
+	`id` int(11) NOT NULL AUTO_INCREMENT,
+	`username` varchar(10) NOT NULL,
+	`email` tinytext NOT NULL,
+	`password` varchar(515) NOT NULL,
+	`password_salt` varchar(20) NOT NULL,
+	`name` varchar(30) NOT NULL,
+	`created` datetime NOT NULL,
+	`attempt` varchar(15) NOT NULL,
+	PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1;
 
 --
--- Indexes for table `users`
+-- Table structure for table `resetTokens`
 --
-ALTER TABLE `users`
- ADD PRIMARY KEY (`id`);
-ALTER TABLE `users`
- MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=1;
+
+CREATE TABLE IF NOT EXISTS `resetTokens` (
+	`token` varchar(40) NOT NULL COMMENT 'The Unique Token Generated',
+	`uid` int(11) NOT NULL COMMENT 'The User Id',
+	`requested` varchar(20) NOT NULL COMMENT 'The Date when token was created'
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
