@@ -3,15 +3,18 @@ require "class.loginsys.php";
 $LS = new LoginSystem();
 $LS->init();
 if(isset($_POST['act_login'])){
- $user=$_POST['login'];
- $pass=$_POST['pass'];
- if($user=="" || $pass==""){
-  $msg=array("Error", "Username / Password Wrong !");
- }else{
-  if(!$LS->login($user, $pass)){
-   $msg=array("Error", "Username / Password Wrong !");
-  }
- }
+	$user=$_POST['login'];
+	$pass=$_POST['pass'];
+	if($user == "" || $pass==""){
+		$msg = array("Error", "Username / Password Wrong !");
+	}else{
+		$login = $LS->login($user, $pass);
+		if($login === false){
+			$msg = array("Error", "Username / Password Wrong !");
+		}else if(is_array($login) && $login['status'] == "blocked"){
+			$msg = array("Error", "Too many login attempts. You can attempt login after ". $login['minutes'] ." minutes (". $login['seconds'] ." seconds)");
+		}
+	}
 }
 ?>
 <html>
