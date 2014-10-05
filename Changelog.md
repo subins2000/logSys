@@ -1,6 +1,6 @@
 # Changelog
 
-(https://plus.google.com/u/0/105291845791114608759)[Shamil Kashmeri] asked whether he should upgrade from 0.1 to 0.3 and I thought it would be a good idea for making a changelog instead of explaining the new features everytime someone asks. So, here you go :
+[Shamil Kashmeri](https://plus.google.com/u/0/105291845791114608759) asked whether he should upgrade from 0.1 to 0.3 and I thought it would be a good idea for making a changelog instead of explaining the new features everytime someone asks. So, here you go :
 
 ## 0.3
 
