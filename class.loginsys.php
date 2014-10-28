@@ -523,6 +523,7 @@ class LoginSystem {
 	/* Do a redirect */
 	public function redirect($url, $status=302){
 		header("Location: $url", true, $status);
+		exit;
 	}
 	
 	/* Any mails need to be snt by logSys goes to here. */
