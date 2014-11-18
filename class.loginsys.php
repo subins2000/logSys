@@ -205,7 +205,7 @@ class LoginSystem {
 	
 	/* A function to register a user with passing the username, password and optionally any other additional fields. */
 	public function register( $id, $password, $other = array() ){
-		if( $this->userExists($id) && (isset($other['email']) && $this->userExists($other['email'])) ){
+		if( $this->userExists($id) || (isset($other['email']) && $this->userExists($other['email'])) ){
 			return "exists";
 		}else{
 			$randomSalt	= $this->rand_string(20);
