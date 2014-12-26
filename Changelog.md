@@ -6,6 +6,7 @@
 
 - Updates to existing features
 - Added feature for blocking brute force attacks with settings variables
+- Fixed bug of remember me feature
 
 ## 0.2
 
