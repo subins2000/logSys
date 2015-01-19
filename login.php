@@ -1,4 +1,4 @@
-<?
+<?php
 require "class.loginsys.php";
 $LS = new LoginSystem();
 $LS->init();
@@ -37,7 +37,7 @@ if(isset($_POST['act_login'])){
     width: 230px;
    }
    </style>
-   <?
+   <?php
    if(isset($msg)){
     echo $msg[0]."<br/>".$msg[1];
    }
