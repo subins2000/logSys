@@ -40,7 +40,7 @@ if(isset($_POST['act_login'])){
     width: 230px;
    }
    </style>
-   <?
+   <?php
    if(isset($msg)){
     echo $msg[0]."<br/>".$msg[1];
    }
