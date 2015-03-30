@@ -2,10 +2,9 @@
  <head></head>
  <body>
   <?php
-  require "class.loginsys.php";
-  $LS = new LoginSystem();
-  $LS->init();
-  $LS->forgotPassword();
+  require "config.php";
+  \Fr\LS::init();
+  \Fr\LS::forgotPassword();
   ?>
  </body>
 </html>

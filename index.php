@@ -1,7 +1,5 @@
 <?php
-require "class.loginsys.php";
-$LS = new LoginSystem();
-$LS->init();
+require "config.php";
 ?>
 <!DOCTYPE html>
 <html>

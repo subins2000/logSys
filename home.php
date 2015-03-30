@@ -1,10 +1,8 @@
 <?php
-require "class.loginsys.php";
-$LS = new LoginSystem();
-$LS->init();
+require "config.php";
 if( isset($_POST['newName']) ){
 	$_POST['newName'] = $_POST['newName']=="" ? "Dude" : $_POST['newName'];
-	$LS->updateUser(array(
+	\Fr\LS::updateUser(array(
 		"name" => $_POST['newName']
 	));
 }
@@ -12,15 +10,19 @@ if( isset($_POST['newName']) ){
 <html>
 	<head></head>
 	<body>
-		<a href="logout.php">Log Out</a>
+		<h1>Welcome</h1>
+		<p>You have been successfully logged in.</p>
 		<p>
-			You registered on this website <strong><?php echo $LS->timeSinceJoin(); ?></strong> ago.
+			<a href="logout.php">Log Out</a>
 		</p>
 		<p>
-			Here is the full data the database stores on this user :
+			You registered on this website <strong><?php echo \Fr\LS::joinedSince(); ?></strong> ago.
+		</p>
+		<p>
+			Here is the full data, the database stores on this user :
 		</p>
 		<pre><?php
-			$details = $LS->getUser();
+			$details = \Fr\LS::getUser();
 			print_r($details);
 			?></pre>
 		<p>
@@ -30,5 +32,8 @@ if( isset($_POST['newName']) ){
 			<input name="newName" placeholder="New name" />
 			<button>Change Name</button>
 		</form>
+    <p>
+      <a href="change.php">Change Password</a>
+    </p>
 	</body>
 </html>

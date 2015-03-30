@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 	`id` int(11) NOT NULL AUTO_INCREMENT,
 	`username` varchar(10) NOT NULL,
 	`email` tinytext NOT NULL,
-	`password` varchar(515) NOT NULL,
+	`password` varchar(64) NOT NULL,
 	`password_salt` varchar(20) NOT NULL,
 	`name` varchar(30) NOT NULL,
 	`created` datetime NOT NULL,

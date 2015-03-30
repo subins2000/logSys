@@ -1,64 +1,50 @@
 <?php
-include "class.loginsys.php";
-$LS = new LoginSystem();
-$LS->init();
+include "config.php";
+\Fr\LS::init();
 ?>
 <!DOCTYPE html>
 <html>
   <head></head>
   <body>
-     <div class="content">
-        <h1>Register</h1>
-        <form action="register.php" method="POST">
-          <label>
-            <input name="username" placeholder="Username" />
-          </label>
-          <label>
-            <input name="email" placeholder="E-Mail" /> 
-          </label>
-          <label>
-            <input name="pass" type="password" placeholder="Password" />
-          </label>
-          <label>
-            <input name="pass2" type="password" placeholder="Retype Password" />
-          </label>
-          <label>
-            <input name="name" placeholder="Name" />
-          </label>
-          <label>
-            <button name="submit">Register</button>
-          </label>
-        </form>
-        <style>
-          label{
-            display: block;
-            margin-bottom: 5px;
-          }
-        </style>
-        <?php
-        if( isset($_POST['submit']) ){
-          $user = $_POST['username'];
-          $email = $_POST['email'];
-          $pass = $_POST['pass'];
-          $pass2 = $_POST['pass2'];
-          $name = $_POST['name'];
-          if( $user=="" || $email=="" || $pass=='' || $pass2=='' || $name=='' ){
-             echo "Fields Left Blank","Some Fields were left blank. Please fill up all fields.";
-             exit;
-          }
-          if( !$LS->validEmail($email) ){
-             echo "E-Mail Is Not Valid", "The E-Mail you gave is not valid";
-             exit;
-          }
-          if( !ctype_alnum($user) ){
-             echo "Invalid Username", "The Username is not valid. Only ALPHANUMERIC characters are allowed and shouldn't exceed 10 characters.";
-             //exit;
-          }
-          if($pass != $pass2){
-             echo "Passwords Don't Match","The Passwords you entered didn't match";
-             exit;
-          }
-          $createAccount = $LS->register($user, $pass,
+    <div class="content">
+      <h1>Register</h1>
+      <form action="register.php" method="POST">
+        <label>
+          <input name="username" placeholder="Username" />
+        </label>
+        <label>
+          <input name="email" placeholder="E-Mail" /> 
+        </label>
+        <label>
+          <input name="pass" type="password" placeholder="Password" />
+        </label>
+        <label>
+          <input name="retyped_password" type="password" placeholder="Retype Password" />
+        </label>
+        <label>
+          <input name="name" placeholder="Name" />
+        </label>
+        <label>
+          <button name="submit">Register</button>
+        </label>
+      </form>
+      <?php
+      if( isset($_POST['submit']) ){
+        $username = $_POST['username'];
+        $email = $_POST['email'];
+        $password = $_POST['pass'];
+        $retyped_password = $_POST['retyped_password'];
+        $name = $_POST['name'];
+        if( $username == "" || $email == "" || $password == '' || $retyped_password == '' || $name == '' ){
+            echo "<h2>Fields Left Blank</h2>", "<p>Some Fields were left blank. Please fill up all fields.</p>";
+        }elseif( !\Fr\LS::validEmail($email) ){
+            echo "<h2>E-Mail Is Not Valid</h2>", "<p>The E-Mail you gave is not valid</p>";
+        }elseif( !ctype_alnum($username) ){
+            echo "<h2>Invalid Username</h2>", "<p>The Username is not valid. Only ALPHANUMERIC characters are allowed and shouldn't exceed 10 characters.</p>";
+        }elseif($password != $retyped_password){
+            echo "<h2>Passwords Don't Match</h2>", "<p>The Passwords you entered didn't match</p>";
+        }else{
+          $createAccount = \Fr\LS::register($username, $password,
             array(
               "email" => $email,
               "name" => $name,
@@ -66,12 +52,19 @@ $LS->init();
             )
           );
           if($createAccount === "exists"){
-             echo "<label>User Exists.</label>";
+            echo "<label>User Exists.</label>";
           }elseif($createAccount === true){
-             echo "<label>Success. Created account. <a href='login.php'>Log In</a></label>";
+            echo "<label>Success. Created account. <a href='login.php'>Log In</a></label>";
           }
         }
+      }
       ?>
-     </div>
+      <style>
+        label{
+          display: block;
+          margin-bottom: 5px;
+        }
+      </style>
+    </div>
   </body>
 </html>
