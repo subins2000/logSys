@@ -58,7 +58,7 @@ class LS {
       "username" => "",
       "password" => "",
       "name" => "",
-      "table" => ""
+      "table" => "users"
     ),
     
     /**
