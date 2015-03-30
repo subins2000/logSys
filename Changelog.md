@@ -7,6 +7,7 @@
 - Updates to existing features
 - logSys is now part of the Francium Project
 - logSys is a static class and not an object class
+- "class.loginsys.php" is now "class.logsys.php"
 - \Fr\LS::changePassword() is merely a function and does not anymore prints the form for changing the password
 - Configuration is done by \Fr\LS::$config and Default Config in \Fr\LS::$default_config
 - \Fr\LS::timeSinceJoin() is now \Fr\LS::joinedSince()
