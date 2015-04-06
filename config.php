@@ -6,8 +6,7 @@ require "class.logsys.php";
     "port" => 3306,
     "username" => "root",
     "password" => "mypassword",
-    "name" => "test",
-    "table" => "users"
+    "name" => "test"
   ),
   "pages" => array(
     "no_login" => array(

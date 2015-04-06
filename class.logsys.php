@@ -99,8 +99,9 @@ class LS {
       
       /**
        * Prevent Brute Forcing.
-       * By enabling this, logSys will deny login for \Fr\LS::$bf_limit
-       * seconds after 5 incorrect login tries.
+       * By enabling this, logSys will deny login for the time mentioned 
+       * in the "brute_force"->"time_limit" seconds after "brute_force"->"tries"
+       * number of incorrect login tries.
        */
       "block_brute_force" => true
     ),
@@ -142,6 +143,20 @@ class LS {
        * logSys redirects to here after user logs in
        */
       "home_page" => "",
+    ),
+    
+    /**
+     * Settings about cookie creation
+     */
+    "cookies" => array(
+      /**
+       * Default : cookies expire in 30 days. The value is
+       * for setting in strtotime() function
+       * http://php.net/manual/en/function.strtotime.php
+       */
+      "expire" => "+30 days",
+      "path" => "/",
+      "domain" => "",
     )
   );
   
@@ -158,7 +173,7 @@ class LS {
    * Merge user config and default config
    */
   public static function config(){
-    self::$config = array_merge(self::$default_config, self::$config);
+    self::$config = array_replace_recursive(self::$default_config, self::$config);
   }
   
   /**
@@ -184,7 +199,7 @@ class LS {
   private static $init_called = false;
   private static $cookie, $session, $remember_cookie, $dbh;
   
-  public static function construct(){
+  public static function construct($called_from = ""){
     if(self::$constructed === false){
       self::config();
       self::$constructed = true;
@@ -223,7 +238,7 @@ class LS {
         */
         if(self::$config['features']['remember_me'] === true && self::$remember_cookie !== false && self::$loggedIn === false){
           $encUserID = hash("sha256", self::$config['keys']['cookie']. self::$remember_cookie . self::$config['keys']['cookie']);
-            if(self::$cookie == $encUserID){
+          if(self::$cookie == $encUserID){
             self::$loggedIn = true;
           }else{
             self::$loggedIn = false;
@@ -236,6 +251,9 @@ class LS {
         }
       
         self::$user = self::$session;
+        if(self::$config['features']['auto_init'] === true && $called_from != "logout" && $called_from != "login"){
+          self::init();
+        }
         return true;
       }catch(\PDOException $e) {
         /**
@@ -266,7 +284,7 @@ class LS {
    * when calling this function to avail the "Remember Me" feature.
    */
   public static function login($username, $password, $remember_me = false, $cookies = true){
-    self::construct();
+    self::construct("login");
     if(self::$db === true){
       /**
        * We Add LIMIT to 1 in SQL query because to
@@ -324,10 +342,10 @@ class LS {
           if($cookies === true){
             
             $_SESSION['logSyscuruser'] = $us_id;
-            setcookie("logSyslogin", hash("sha256", self::$config['keys']['cookie'] . $us_id . self::$config['keys']['cookie']), time()+3600*99*500, "/");
+            setcookie("logSyslogin", hash("sha256", self::$config['keys']['cookie'] . $us_id . self::$config['keys']['cookie']), strtotime(self::$config['cookies']['expire']), self::$config['cookies']['path'], self::$config['cookies']['domain']);
             
             if( $remember_me === true && self::$config['features']['remember_me'] === true ){
-              setcookie("logSysrememberMe", $us_id, time()+3600*99*500, "/");
+              setcookie("logSysrememberMe", $us_id, strtotime(self::$config['cookies']['expire']), self::$config['cookies']['path'], self::$config['cookies']['domain'], "/");
             }
             self::$loggedIn = true;
             
@@ -413,7 +431,7 @@ class LS {
    * Logout the current logged in user by deleting the cookies and destroying session
    */
   public static function logout(){
-    self::construct();
+    self::construct("logout");
     session_destroy();
     setcookie("logSyslogin", "", time()-3600, "/");
     setcookie("logSysrememberMe", "", time()-3600, "/");

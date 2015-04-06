@@ -1,7 +1,7 @@
 <?php
 require "config.php";
 if( isset($_POST['newName']) ){
-	$_POST['newName'] = $_POST['newName']=="" ? "Dude" : $_POST['newName'];
+	$_POST['newName'] = $_POST['newName'] == "" ? "Dude" : $_POST['newName'];
 	\Fr\LS::updateUser(array(
 		"name" => $_POST['newName']
 	));
