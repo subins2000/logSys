@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 	`password_salt` varchar(20) NOT NULL,
 	`name` varchar(30) NOT NULL,
 	`created` datetime NOT NULL,
-	`attempt` varchar(15) NOT NULL,
+	`attempt` varchar(15) NOT NULL DEFAULT '0',
 	PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1;
 
