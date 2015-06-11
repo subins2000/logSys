@@ -156,7 +156,7 @@ class LS {
        */
       "expire" => "+30 days",
       "path" => "/",
-      "domain" => "",
+      "domain" => "local.dev",
     )
   );
   
@@ -433,8 +433,8 @@ class LS {
   public static function logout(){
     self::construct("logout");
     session_destroy();
-    setcookie("logSyslogin", "", time()-3600, "/");
-    setcookie("logSysrememberMe", "", time()-3600, "/");
+    setcookie("logSyslogin", "", time()-3600, self::$config['cookies']['path'], self::$config['cookies']['domain']);
+    setcookie("logSysrememberMe", "", time()-3600, self::$config['cookies']['path'], self::$config['cookies']['domain']);
     self::redirect(self::$config['pages']['login_page']);
     return true;
   }
