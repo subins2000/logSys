@@ -22,7 +22,7 @@ namespace Fr;
 /**
 .---------------------------------------------------------------------------.
 |  Software: PHP Login System - PHP logSys                                  |
-|   Version: 0.4  (2015 May 07)                                             |
+|   Version: 0.4  (2015 July 22)                                            |
 |   Contact: http://github.com/subins2000/logsys                            |
 |   Documentation: https://subinsb.com/php-logsys                           |
 |   Support: http://subinsb.com/ask/php-logsys                              |
@@ -156,7 +156,7 @@ class LS {
        */
       "expire" => "+30 days",
       "path" => "/",
-      "domain" => "",
+      "domain" => "local.dev",
     )
   );
   
@@ -435,6 +435,11 @@ class LS {
     session_destroy();
     setcookie("logSyslogin", "", time()-3600, self::$config['cookies']['path'], self::$config['cookies']['domain']);
     setcookie("logSysrememberMe", "", time()-3600, self::$config['cookies']['path'], self::$config['cookies']['domain']);
+    
+    /**
+     * Wait for the cookies to be removed, then redirect
+     */
+    usleep(2000);
     self::redirect(self::$config['pages']['login_page']);
     return true;
   }
@@ -582,7 +587,7 @@ class LS {
   /**
    * A function that handles the logged in user to change her/his password
    */
-  public static function changePassword($curpass, $newpass, $parent = ""){
+  public static function changePassword($newpass, $parent = ""){
     self::construct();
     if(self::$loggedIn){
       $randomSalt = self::rand_string(20);

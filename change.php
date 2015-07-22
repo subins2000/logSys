@@ -4,9 +4,11 @@ require "config.php";
 ?>
 <!DOCTYPE html>
 <html>
-	<head></head>
-	<body>
- 		<?php
+  <head>
+    <title>Change Password</title>
+  </head>
+  <body>
+    <?php
     if(isset($_POST['change_password'])){
       if(isset($_POST['current_password']) && $_POST['current_password'] != "" && isset($_POST['new_password']) && $_POST['new_password'] != "" && isset($_POST['retype_password']) && $_POST['retype_password'] != "" && isset($_POST['current_password']) && $_POST['current_password'] != ""){
           
@@ -16,8 +18,10 @@ require "config.php";
           
         if($new_password != $retype_password){
           echo "<p><h2>Passwords Doesn't match</h2><p>The passwords you entered didn't match. Try again.</p></p>";
+        }else if(\Fr\LS::login(\Fr\LS::getUser("username"), "", false, false) == false){
+          echo "<h2>Current Password Wrong!</h2><p>The password you entered for your account is wrong.</p>";
         }else{
-          $change_password = \Fr\LS::changePassword($curpass, $new_password);
+          $change_password = \Fr\LS::changePassword($new_password);
           if($change_password === true){
             echo "<h2>Password Changed Successfully</h2>";
           }
@@ -42,5 +46,5 @@ require "config.php";
       </label>
       <button style="display: block;margin-top: 10px;" name='change_password' type='submit'>Change Password</button>
     </form>
-	</body>
+  </body>
 </html>
