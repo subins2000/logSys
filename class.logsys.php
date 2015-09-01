@@ -46,7 +46,7 @@ class LS {
      */
     "info" => array(
       "company" => "My Site",
-      "email" => "mail@subinsb.com"
+      "email" => "email@mysite.com"
     ),
     
     /**
@@ -171,9 +171,16 @@ class LS {
   
   /**
    * Merge user config and default config
+   * $direct is for knowing whether the function is called by self::construct()
    */
-  public static function config(){
+  public static function config($config = null, $direct = true){
+    if($config != null){
+      self::$config = $config;
+    }
     self::$config = array_replace_recursive(self::$default_config, self::$config);
+    if($direct == true){
+      self::construct();
+    }
   }
   
   /**
@@ -201,7 +208,7 @@ class LS {
   
   public static function construct($called_from = ""){
     if(self::$constructed === false){
-      self::config();
+      self::config(null, false);
       self::$constructed = true;
       
       if(self::$config['features']['start_session'] === true){
