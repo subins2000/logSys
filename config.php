@@ -1,21 +1,24 @@
 <?php
 require "class.logsys.php";
-\Fr\LS::$config = array(
+\Fr\LS::config(array(
   "db" => array(
     "host" => "localhost",
     "port" => 3306,
     "username" => "root",
-    "password" => "mypassword",
-    "name" => "test"
+    "password" => "backstreetboys",
+    "name" => "test",
+    "table" => "users"
+  ),
+  "features" => array(
+    "auto_init" => true
   ),
   "pages" => array(
     "no_login" => array(
-      "/",
-      "/reset.php",
-      "/register.php"
+      "/Francium/logSys/",
+      "/Francium/logSys/reset.php",
+      "/Francium/logSys/register.php"
     ),
-    "login_page" => "/login.php",
-    "home_page" => "/home.php"
+    "login_page" => "/Francium/logSys/login.php",
+    "home_page" => "/Francium/logSys/home.php"
   )
-);
-\Fr\LS::construct();
+));
