@@ -18,3 +18,4 @@ require "class.logsys.php";
     "home_page" => "/home.php"
   )
 );
+\Fr\LS::construct();

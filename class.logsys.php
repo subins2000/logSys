@@ -11,8 +11,8 @@ namespace Fr;
 |     Author: Subin Siby                                                    |
 | Copyright (c) 2014 - 2015, Subin Siby. All Rights Reserved.               |
 | ------------------------------------------------------------------------- |
-|   License: Distributed under the General Public License (GPL)             |
-|            http://www.gnu.org/licenses/gpl-3.0.html                       |
+|   License: Distributed under the Apache License, Version 2.0              |
+|            http://www.apache.org/licenses/LICENSE-2.0                     |
 | This program is distributed in the hope that it will be useful - WITHOUT  |
 | ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or     |
 | FITNESS FOR A PARTICULAR PURPOSE.                                         |
@@ -22,10 +22,10 @@ namespace Fr;
 /**
 .---------------------------------------------------------------------------.
 |  Software: PHP Login System - PHP logSys                                  |
-|   Version: 0.4  (2015 July 22)                                            |
-|   Contact: http://github.com/subins2000/logsys                            |
-|   Documentation: https://subinsb.com/php-logsys                           |
-|   Support: http://subinsb.com/ask/php-logsys                              |
+|  Version: 0.4 (Last Updated on 2015 September 1)                          |
+|  Contact: http://github.com/subins2000/logsys                             |
+|  Documentation: https://subinsb.com/php-logsys                            |
+|  Support: http://subinsb.com/ask/php-logsys                               |
 '---------------------------------------------------------------------------'
 */
 
@@ -523,7 +523,7 @@ class LS {
           self::$user = $sql->fetchColumn();
           self::$loggedIn = true;
           
-          if(self::changePassword("", $_POST['logSysForgotPassNewPassword'])){
+          if(self::changePassword($_POST['logSysForgotPassNewPassword'])){
             self::$user = false;
             self::$loggedIn = false;
             
@@ -587,7 +587,7 @@ class LS {
   /**
    * A function that handles the logged in user to change her/his password
    */
-  public static function changePassword($newpass, $parent = ""){
+  public static function changePassword($newpass){
     self::construct();
     if(self::$loggedIn){
       $randomSalt = self::rand_string(20);
