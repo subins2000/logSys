@@ -1,5 +1,5 @@
 <?php
-require "class.logsys.php";
+require __DIR__ . "/../class.logsys.php";
 $config = array(
   "db" => array(
     "host" => "localhost",
