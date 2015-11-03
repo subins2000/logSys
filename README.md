@@ -7,6 +7,7 @@ See this [Blog Post](http://subinsb.com/php-logsys) for more details
 
 Features
 ========
+
 logSys includes but not limited to :
 
 1. Basic Login/Register Function (Secured by PDO, SHA256).
@@ -19,3 +20,11 @@ logSys includes but not limited to :
 7. Simple Examples to get you started
 8. Lightweight (41 KB of Awesomeness...)
 9. Maintained frequently
+
+Instructions
+============
+
+The [Blog Post](http://subinsb.com/php-logsys) contains entire information on how to install and use logSys
+
+In case of GitHub repo, the following folders contain examples of usage
+* basic_example
