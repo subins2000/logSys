@@ -58,7 +58,8 @@ class LS {
       "username" => "",
       "password" => "",
       "name" => "",
-      "table" => "users"
+      "table" => "users",
+      "token_table" => "resetTokens"
     ),
     
     /**
@@ -98,12 +99,23 @@ class LS {
       "auto_init" => false,
       
       /**
-       * Prevent Brute Forcing.
+       * Prevent Brute Forcing
+       * ---------------------
        * By enabling this, logSys will deny login for the time mentioned 
        * in the "brute_force"->"time_limit" seconds after "brute_force"->"tries"
        * number of incorrect login tries.
        */
-      "block_brute_force" => true
+      "block_brute_force" => true,
+      
+      /**
+       * Two Step Login
+       * --------------
+       * By enabling this, a checking is done when user visits
+       * whether the device he/she uses is approved by the user.
+       * Allows the original user to revoke logins in other devices/places
+       * Useful if the user forgot to logout in some place.
+       */
+      "two_step_login" => false
     ),
     
     /**
@@ -157,6 +169,55 @@ class LS {
       "expire" => "+30 days",
       "path" => "/",
       "domain" => "local.dev",
+    ),
+    
+    /**
+     * 2 Step Login
+     */
+    'two_step_login' => array(
+      /**
+       * Message to show before displaying "Enter Token" form.
+       */
+      'instruction' => '',
+      
+      /**
+       * Callback when token is generated.
+       * Used to send message to user (Phone/E-Mail)
+       */
+      'sendCallback' => '',
+      
+      /**
+       * The table to stoe user's sessions
+       */
+      'devices_table' => 'user_devices',
+      
+      /**
+       * The length of token generated.
+       * A low value is better for tokens sent via Mobile SMS
+       */
+      'token_length' => 4,
+      
+      /**
+       * Whether the token should be numeric only ?
+       * Default Token : Alphabetic + Numeric mixed strings
+       */
+      'numeric' => false,
+      
+      /**
+       * The expire time of cookie that authorizes the device
+       * to login using the user's account with 2 Step Verification
+       * The value is for setting in strtotime() function
+       * http://php.net/manual/en/function.strtotime.php
+       */
+      'expire' => '+45 days',
+      
+      /**
+       * Should logSys checks if device is valid, everytime
+       * logSys is initiated ie everytime a page loads
+       * If you want to check only the first time a user loads
+       * a page, then set the value to TRUE, else FALSE
+       */
+      'first_check_only' => true
     )
   );
   
@@ -223,7 +284,7 @@ class LS {
         */
         array_push(self::$config['pages']['no_login'], self::$config['pages']['login_page']);
         
-        self::$dbh = new \PDO("mysql:dbname=". self::$config['db']['name'] .";host=". self::$config['db']['host'] .";port=". self::$config['db']['port'], self::$config['db']['username'], self::$config['db']['password']);
+        self::$dbh = new \PDO("mysql:dbname=". self::$config['db']['name'] .";host=". self::$config['db']['host'] .";port=". self::$config['db']['port']. ";charset=utf8", self::$config['db']['username'], self::$config['db']['password']);
         self::$db = true;
         
         self::$cookie = isset($_COOKIE['logSyslogin']) ? $_COOKIE['logSyslogin'] : false;
@@ -256,8 +317,38 @@ class LS {
             self::$session = self::$remember_cookie;
           }
         }
-      
+
         self::$user = self::$session;
+        
+        /**
+         * Check if devices is authorized to use the account
+         */
+        if(self::$config['features']['two_step_login'] === true && self::$loggedIn){
+          $login_page = self::curPage() === self::$config['pages']['login_page'];
+
+          if(!isset($_COOKIE['logSysdevice']) && $login_page === false){
+            /**
+             * The device cookie is not even set. So, logout
+             */
+            self::logout();
+            $called_from = "login";
+          }else if(self::$config['two_step_login']['first_check_only'] === false || (self::$config['two_step_login']['first_check_only'] === true && !isset($_SESSION['device_check']))){
+            $sql = self::$dbh->prepare("SELECT '1' FROM `". self::$config['two_step_login']['devices_table'] ."` WHERE `uid` = ? AND `token` = ?");
+            $sql->execute(array(self::$user, $_COOKIE['logSysdevice']));
+            
+            /**
+             * Device not authorized, so remove device cookie & logout
+             */
+            if($sql->fetchColumn() !== '1' && $login_page === false){
+              setcookie("logSysdevice", "", time() - 10);
+              self::logout();
+              $called_from = "login";
+            }else{
+              $_SESSION['device_check'] = 1;
+            }
+          }
+        }
+        
         if(self::$config['features']['auto_init'] === true && $called_from != "logout" && $called_from != "login"){
           self::init();
         }
@@ -359,14 +450,21 @@ class LS {
             // Update the attempt status
             self::updateUser(array(
               "attempt" => "" // No tries
-            ), $us_id);
+            ));
             
             // Redirect
-            if( self::$init_called ){
+            if(self::$init_called){
               self::redirect(self::$config['pages']['home_page']);
             }
+            return true;
+          }else{
+            /**
+             * If cookies shouldn't be set,
+             * it means login() was called
+             * to get the user's ID. So, return it
+             */
+            return $us_id;
           }
-          return true;
         }else{
           // Incorrect password
           if(self::$config['features']['block_brute_force'] === true){
@@ -440,8 +538,8 @@ class LS {
   public static function logout(){
     self::construct("logout");
     session_destroy();
-    setcookie("logSyslogin", "", time()-3600, self::$config['cookies']['path'], self::$config['cookies']['domain']);
-    setcookie("logSysrememberMe", "", time()-3600, self::$config['cookies']['path'], self::$config['cookies']['domain']);
+    setcookie("logSyslogin", "", time() - 10, self::$config['cookies']['path'], self::$config['cookies']['domain']);
+    setcookie("logSysrememberMe", "", time() - 10, self::$config['cookies']['path'], self::$config['cookies']['domain']);
     
     /**
      * Wait for the cookies to be removed, then redirect
@@ -477,7 +575,7 @@ class LS {
        * The user gave the password reset token. Check if the token is valid.
        */
       $reset_pass_token = urldecode($_GET['resetPassToken']);
-      $sql = self::$dbh->prepare("SELECT `uid` FROM `resetTokens` WHERE `token` = ?");
+      $sql = self::$dbh->prepare("SELECT `uid` FROM `". self::$config['db']['token_table'] ."` WHERE `token` = ?");
       $sql->execute(array($reset_pass_token));
       
       if($sql->rowCount() == 0 || $reset_pass_token == ""){
@@ -508,7 +606,7 @@ class LS {
       }
     }elseif(isset($_POST['logSysForgotPassChange']) && isset($_POST['logSysForgotPassNewPassword']) && isset($_POST['logSysForgotPassRetypedPassword'])){
       $reset_pass_token = urldecode($_POST['token']);
-      $sql = self::$dbh->prepare("SELECT `uid` FROM `resetTokens` WHERE `token` = ?");
+      $sql = self::$dbh->prepare("SELECT `uid` FROM `". self::$config['db']['token_table'] ."` WHERE `token` = ?");
       $sql->execute(array($reset_pass_token));
       
       if( $sql->rowCount() == 0 || $reset_pass_token == "" ){
@@ -537,7 +635,7 @@ class LS {
             /**
              * The token shall not be used again, so remove it.
              */
-            $sql = self::$dbh->prepare("DELETE FROM `resetTokens` WHERE `token` = ?");
+            $sql = self::$dbh->prepare("DELETE FROM `". self::$config['db']['token_table'] ."` WHERE `token` = ?");
             $sql->execute(array($reset_pass_token));
             
             echo "<h3>Success : Password Reset Successful</h3><p>You may now login with your new password.</p>";
@@ -569,7 +667,7 @@ class LS {
            * Make token and insert into the table
            */
           $token = self::rand_string(40);
-          $sql = self::$dbh->prepare("INSERT INTO `resetTokens` (`token`, `uid`, `requested`) VALUES (?, ?, NOW())");
+          $sql = self::$dbh->prepare("INSERT INTO `". self::$config['db']['token_table'] ."` (`token`, `uid`, `requested`) VALUES (?, ?, NOW())");
           $sql->execute(array($token, $uid));
           $encodedToken = urlencode($token);
           
@@ -725,6 +823,178 @@ class LS {
   }
   
   /**
+   * 2 Step Verification Login Process
+   * ---------------------------------
+   * When user logs in, it checks whether there is a cookie named "logSysdevice" and if there is :
+   *    1. Checks `config` -> `two_step_login` -> `devices_table` table in DB whethere there is a token with value as that of $_COOKIES['logSysdevice']
+   *    2. If there is a row in table, then the "Enter Received Token" form is not shown and is directly logged in if username & pass is correct
+   * If there is not a cookie, then :
+   *    1. The "Enter Received token" form is shown
+   *    2. If the token entered is correct, then a unique string is set as $_COOKIE['logSysdevice'] value and inserted to `config` -> `two_step_login` -> `devices_table` table in DB
+   *    3. The $_COOKIE['logSysdevice'] is set to be stored for 4 months
+   * ---------------------
+   * ^ In the above instructions, the token sending to E-Mail/SMS is not mentioned. Assume that it is done
+   */
+  public static function twoStepLogin($identification = "", $password = "", $remember_me = false){
+    if(isset($_POST['logSys_two_step_login-token']) && isset($_POST['logSys_two_step_login-uid']) && $_SESSION['logSys_two_step_login-first_step'] === '1'){
+      /**
+       * The user's ID and token is got through the form
+       * User = One who is about to log in and is stuck at 2 step verification
+       */
+      $uid = $_POST['logSys_two_step_login-uid'];
+      $token = $_POST['logSys_two_step_login-token'];
+      
+      $sql = self::$dbh->prepare("SELECT COUNT(1) FROM `". self::$config['db']['token_table'] ."` WHERE `token` = ? AND `uid` = ?");
+      $sql->execute(array($token, $uid));
+      
+      if($sql->fetchColumn() == 0){
+        /**
+         * To prevent user from Brute Forcing the token, we set the
+         * status of the first login step to false,
+         * so that the user would have to login again
+         */
+        $_SESSION['logSys_two_step_login-first_step'] = '0';
+        echo "<h3>Error : Wrong/Invalid Token</h3>";
+        return "invalidToken";
+      }else{
+        /**
+         * Register User's new device if and only if
+         * the user wants to remember the device from
+         * which the user is logging in
+         */
+        if(isset($_POST['logSys_two_step_login-dontask'])){
+          $device_token = self::rand_string(10);
+          $sql = self::$dbh->prepare("INSERT INTO `". self::$config['two_step_login']['devices_table'] ."` (`uid`, `token`, `last_access`) VALUES (?, ?, NOW())");
+          $sql->execute(array($uid, $device_token));
+          setcookie("logSysdevice", $device_token, strtotime(self::$config['two_step_login']['expire']), self::$config['cookies']['path'], self::$config['cookies']['domain']);
+        }
+        
+        /**
+         * Revoke token from reusing
+         */
+        $sql = self::$dbh->prepare("DELETE FROM `". self::$config['db']['token_table'] ."` WHERE `token` = ? AND `uid` = ?");
+        $sql->execute(array($token, $uid));
+        self::login(self::getUser("username", $uid), "", isset($_POST['logSys_two_step_login-remember_me']));
+      }
+      return true;
+    }else if($identification != "" && $password != ""){
+      $login = self::login($identification, $password, $remember_me, false);
+      if($login === false){
+        /**
+         * Username/Password wrong
+         */
+        return false;
+      }else if(is_array($login) && $login['status'] == "blocked"){
+        return $login;
+      }else{
+        /**
+         * Get the user ID from \Fr\LS::login()
+         */
+        $uid = $login;
+          
+        /**
+         * Check if device is verfied so that 2 Step Verification can be skipped
+         */
+        if(isset($_COOKIE['logSysdevice'])){
+          $sql = self::$dbh->prepare("SELECT 1 FROM `". self::$config['two_step_login']['devices_table'] ."` WHERE `uid` = ? AND `token` = ?");
+          $sql->execute(array($uid, $_COOKIE['logSysdevice']));
+          if($sql->fetchColumn() == "1"){
+            $verfied = true;
+            /**
+             * Update last accessed time
+             */
+            $sql = self::$dbh->prepare("UPDATE `". self::$config['two_step_login']['devices_table'] ."` SET `last_access` = NOW() WHERE `uid` = ? AND `token` = ?");
+            $sql->execute(array($uid, $_COOKIE['logSysdevice']));
+            
+            self::login(self::getUser("username", $uid), "", $remember_me);
+            return true;
+          }
+        }
+        /**
+         * Start the 2 Step Verification Process
+         * Do only if callback is present and if
+         * the device is not verified
+         */
+        if(is_callable(self::$config['two_step_login']['send_callback']) && !isset($verified)){
+          /**
+           * The first part of 2 Step Login is completed
+           */
+          $_SESSION['logSys_two_step_login-first_step'] = '1';
+          
+          /**
+           * The 2nd parameter depends on `config` -> `two_step_login` -> `numeric`
+           */
+          $token = self::rand_string(self::$config['two_step_login']['token_length'], self::$config['two_step_login']['numeric']);
+          
+          /**
+           * Save the token in DB
+           */
+          $sql = self::$dbh->prepare("INSERT INTO `". self::$config['db']['token_table'] ."` (`token`, `uid`, `requested`) VALUES (?, ?, NOW())");
+          $sql->execute(array($token, $uid));
+          
+          call_user_func_array(self::$config['two_step_login']['send_callback'], array($uid, $token));
+          
+          /**
+           * Display the form
+           */
+          $html = "<form action='". self::curPageURL() ."' method='POST'>
+            <p>". self::$config['two_step_login']['instruction'] ."</p>
+            <label>
+              <p>Token Received</p>
+              <input type='text' name='logSys_two_step_login-token' placeholder='Paste the token here... (case sensitive)' />
+            </label>
+            <label style='display: block;'>
+              <span>Remember this device ?</span>
+              <input type='checkbox' name='logSys_two_step_login-dontask' />
+            </label>
+            <input type='hidden' name='logSys_two_step_login-uid' value='". $uid ."' />
+            ". ($remember_me === true ? "<input type='hidden' name='logSys_two_step_login-remember_me' />" : "") ."
+            <label>
+              <button>Verify</button>
+            </label>
+          </form>";
+          echo $html;
+          return "formDisplay";
+        }else{
+          self::log("two_step_login: Token Callback not present");
+        }
+      }
+    }
+    /**
+     * 2 Step Login is not doing any actions or
+     * hasn't returned anything before. If so,
+     * then return false to indicate that the
+     * function is not doing anything
+     */
+    return false;
+  }
+  
+  /**
+   * Returns array of devices that are authorized
+   * to login by user's account credentials
+   */
+  public static function getDevices(){
+    if(self::$loggedIn){
+      $sql = self::$dbh->prepare("SELECT * FROM `". self::$config['two_step_login']['devices_table'] ."` WHERE `uid` = ?");
+      $sql->execute(array(self::$user));
+      return $sql->fetchAll(\PDO::FETCH_ASSOC);
+    }else{
+      return false;
+    }
+  }
+  
+  /**
+   * Revoke a device
+   */
+  public static function revokeDevice($device_token){
+    if(self::$loggedIn){
+      $sql = self::$dbh->prepare("DELETE FROM `". self::$config['two_step_login']['devices_table'] ."` WHERE `uid` = ? AND `token` = ?");
+      $sql->execute(array(self::$user, $device_token));
+      return $sql->rowCount() == 1;
+    }
+  }
+  
+  /**
    * ---------------------
    * Extra Tools/Functions
    * ---------------------
@@ -754,10 +1024,11 @@ class LS {
   
   /**
    * Generate a Random String
+   * $int - Whether numeric string should be output
    */
-  public static function rand_string($length) {
+  public static function rand_string($length, $int = false) {
     $random_str = "";
-    $chars = "subinsblogabcdefghijklmanopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    $chars = $int ? "0516243741506927589" : "subinsblogabcdefghijklmanopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     $size = strlen($chars) - 1;
     for($i = 0;$i < $length;$i++) {
       $random_str .= $chars[rand(0, $size)];
@@ -795,6 +1066,46 @@ class LS {
     $headers[] = "From: ". self::$config['info']['email'];
     $headers[] = "Reply-To: ". self::$config['info']['email'];
     mail($email, $subject, $body, implode("\r\n", $headers));
+  }
+  
+  /**
+   * CSRF Protection
+   */
+  public static function csrf($type = ""){
+    if(!isset($_COOKIE['csrf_token'])){
+      $csrf_token = self::rand_string(5);
+      setcookie("csrf_token", $csrf_token, 0, self::$config['cookies']['path'], self::$config['cookies']['domain']);
+    }else{
+      $csrf_token = $_COOKIE['csrf_token'];
+    }
+    if($type == "s"){
+      /**
+       * Output as string
+       */
+      return urlencode($csrf_token);
+    }elseif($type == "g"){
+      /**
+       * Output as a GET parameter
+       */
+      return "&csrf_token=" . urlencode($csrf_token);
+    }elseif($type == "i"){
+      /**
+       * Output as an input field
+       */
+      echo "<input type='hidden' name='csrf_token' value='{$csrf_token}' />";
+    }else{
+      /**
+       * Check CSRF validity
+       */
+      if((isset($_POST['csrf_token']) && $_COOKIE['csrf_token'] == $_POST['csrf_token']) || (isset($_GET['csrf_token']) && $_COOKIE['csrf_token'] == $_GET['csrf_token'])){
+        return true;
+      }else{
+        /**
+         * CSRF Token doesn't match.
+         */
+        return false;
+      }
+    }
   }
   
   /**

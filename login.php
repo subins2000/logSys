@@ -1,13 +1,16 @@
 <?php
+$normal_login_page = 1;
 require "config.php";
+
 \Fr\LS::init();
+
 if(isset($_POST['action_login'])){
 	$identification = $_POST['login'];
 	$password = $_POST['password'];
 	if($identification == "" || $password == ""){
 		$msg = array("Error", "Username / Password Wrong !");
 	}else{
-		$login = \Fr\LS::login($identification, $password, isset($_POST['remember_me']));
+    $login = \Fr\LS::login($identification, $password, isset($_POST['remember_me']));
 		if($login === false){
 			$msg = array("Error", "Username / Password Wrong !");
 		}else if(is_array($login) && $login['status'] == "blocked"){
@@ -57,6 +60,10 @@ if(isset($_POST['action_login'])){
       <p>
         <p>Forgot Your Password ?</p>
         <a class="button" href="reset.php">Reset Password</a>
+      </p>
+      <p>
+        <p>Want Login To Be More Awesome ?</p>
+        <a class="button" href="two-step-login.php">Two Step Login</a>
       </p>
     </div>
   </body>

@@ -35,5 +35,8 @@ if( isset($_POST['newName']) ){
     <p>
       <a href="change.php">Change Password</a>
     </p>
+    <p>
+      <a href="manage-devices.php">Manage Devices</a>
+    </p>
 	</body>
 </html>

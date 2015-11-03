@@ -32,3 +32,15 @@ CREATE TABLE IF NOT EXISTS `resetTokens` (
 	`uid` int(11) NOT NULL COMMENT 'The User Id',
 	`requested` varchar(20) NOT NULL COMMENT 'The Date when token was created'
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+--
+-- Table structure for table `user_devices`
+--
+
+CREATE TABLE IF NOT EXISTS `user_devices` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `uid` int(11) NOT NULL COMMENT 'The user''s ID',
+  `token` varchar(15) NOT NULL COMMENT 'A unique token for the user''s device',
+  `last_access` varchar(20) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
