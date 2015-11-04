@@ -21,11 +21,11 @@ namespace Fr;
 
 /**
 .---------------------------------------------------------------------------.
-|  Software: PHP Login System - PHP logSys                                  |
-|  Version: 0.5 (Last Updated on 2015 November 3)                           |
-|  Contact: http://github.com/subins2000/logsys                             |
+|  Software:      PHP Login System - PHP logSys                             |
+|  Version:       0.5 (Last Updated on 2015 November 3)                     |
+|  Contact:       http://github.com/subins2000/logsys                       |
 |  Documentation: https://subinsb.com/php-logsys                            |
-|  Support: http://subinsb.com/ask/php-logsys                               |
+|  Support:       http://subinsb.com/ask/php-logsys                         |
 '---------------------------------------------------------------------------'
 */
 
@@ -42,11 +42,12 @@ class LS {
   
   public static $default_config = array(
     /**
-     * Information about who uses logSys
+     * Basic Config of logSys
      */
-    "info" => array(
+    "basic" => array(
       "company" => "My Site",
-      "email" => "email@mysite.com"
+      "email" => "email@mysite.com",
+      "email_callback" => 0
     ),
     
     /**
@@ -184,7 +185,7 @@ class LS {
        * Callback when token is generated.
        * Used to send message to user (Phone/E-Mail)
        */
-      'sendCallback' => '',
+      'send_callback' => '',
       
       /**
        * The table to stoe user's sessions
@@ -449,8 +450,8 @@ class LS {
             
             // Update the attempt status
             self::updateUser(array(
-              "attempt" => "" // No tries
-            ));
+              "attempt" => "0" // No tries
+            ), $us_id);
             
             // Redirect
             if(self::$init_called){
@@ -675,7 +676,7 @@ class LS {
            * Prepare the email to be sent
            */
           $subject = "Reset Password";
-          $body   = "You requested for resetting your password on ". self::$config['info']['company'] .". For this, please click the following link :
+          $body   = "You requested for resetting your password on ". self::$config['basic']['company'] .". For this, please click the following link :
           <blockquote>
             <a href='". self::curPageURL() ."?resetPassToken={$encodedToken}'>Reset Password : {$token}</a>
           </blockquote>";
@@ -990,6 +991,9 @@ class LS {
     if(self::$loggedIn){
       $sql = self::$dbh->prepare("DELETE FROM `". self::$config['two_step_login']['devices_table'] ."` WHERE `uid` = ? AND `token` = ?");
       $sql->execute(array(self::$user, $device_token));
+      if(isset($_SESSION['device_check'])){
+        unset($_SESSION['device_check']);
+      }
       return $sql->rowCount() == 1;
     }
   }
@@ -1058,14 +1062,18 @@ class LS {
    */
   public static function sendMail($email, $subject, $body){
     /**
-     * Change this to something else if you don't like PHP's mail()
+     * If there is a callback for email sending, use it else PHP's mail()
      */
-    $headers = array();
-    $headers[] = "MIME-Version: 1.0";
-    $headers[] = "Content-type: text/html; charset=iso-8859-1";
-    $headers[] = "From: ". self::$config['info']['email'];
-    $headers[] = "Reply-To: ". self::$config['info']['email'];
-    mail($email, $subject, $body, implode("\r\n", $headers));
+    if(is_callable(self::$config['basic']['email_callback'])){
+      self::$config['basic']['email_callback']($email, $subject, $body);
+    }else{
+      $headers = array();
+      $headers[] = "MIME-Version: 1.0";
+      $headers[] = "Content-type: text/html; charset=iso-8859-1";
+      $headers[] = "From: ". self::$config['basic']['email'];
+      $headers[] = "Reply-To: ". self::$config['basic']['email'];
+      mail($email, $subject, $body, implode("\r\n", $headers));
+    }
   }
   
   /**
