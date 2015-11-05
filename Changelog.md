@@ -9,6 +9,10 @@
 - Manage Devices
 - More Examples
 - Improved Examples
+- `config` -> `info` is now `config` -> `basic`
+- Added Email Callback so that developer can change the mechanism of sending email
+  Previously, developer had to change the contents of \Fr\LS::sendMail() function
+  Callback can be added in `config` -> `basic` -> `email_callback`
 
 ## 0.4
 
