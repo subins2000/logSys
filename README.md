@@ -18,7 +18,7 @@ logSys includes but not limited to :
 5. Device Manager to know the devices that are currently logged in
 6. Debugging/Logging made simpler
 7. Simple Examples to get you started
-8. Lightweight (41 KB of Awesomeness...)
+8. Lightweight (**42 KB of Awesomeness...**)
 9. Maintained frequently
 
 Instructions
