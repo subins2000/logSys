@@ -27,4 +27,5 @@ Instructions
 The [Blog Post](http://subinsb.com/php-logsys) contains entire information on how to install and use logSys
 
 In case of GitHub repo, the following folders contain examples of usage
-* basic_example
+* example-basic
+* example-two-step-login
