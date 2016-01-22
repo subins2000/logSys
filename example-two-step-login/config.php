@@ -14,7 +14,7 @@ $config = array(
     "table" => "users"
   ),
   "features" => array(
-    "auto_init" => false,
+    "auto_init" => true,
     "two_step_login" => true
   ),
   "pages" => array(
