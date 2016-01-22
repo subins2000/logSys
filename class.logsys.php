@@ -169,7 +169,7 @@ class LS {
        */
       "expire" => "+30 days",
       "path" => "/",
-      "domain" => "local.dev",
+      "domain" => "",
     ),
     
     /**
@@ -441,8 +441,9 @@ class LS {
           if($cookies === true){
             
             $_SESSION['logSyscuruser'] = $us_id;
-            setcookie("logSyslogin", hash("sha256", self::$config['keys']['cookie'] . $us_id . self::$config['keys']['cookie']), strtotime(self::$config['cookies']['expire']), self::$config['cookies']['path'], self::$config['cookies']['domain']);
             
+            setcookie("logSyslogin", hash("sha256", self::$config['keys']['cookie'] . $us_id . self::$config['keys']['cookie']), strtotime(self::$config['cookies']['expire']), self::$config['cookies']['path'], self::$config['cookies']['domain']);
+
             if( $remember_me === true && self::$config['features']['remember_me'] === true ){
               setcookie("logSysrememberMe", $us_id, strtotime(self::$config['cookies']['expire']), self::$config['cookies']['path'], self::$config['cookies']['domain']);
             }
