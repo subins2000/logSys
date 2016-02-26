@@ -1,6 +1,5 @@
 <?php
 include "config.php";
-\Fr\LS::init();
 ?>
 <!DOCTYPE html>
 <html>

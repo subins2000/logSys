@@ -1,6 +1,5 @@
 <?php
 require "config.php";
-\Fr\LS::init();
 if(isset($_GET['revoke_device']) && \Fr\LS::csrf()){
   if(\Fr\LS::revokeDevice($_GET['revoke_device'])){
     $revoked = true;

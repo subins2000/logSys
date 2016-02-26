@@ -6,7 +6,6 @@ if( isset($_POST['newName']) ){
 		"name" => $_POST['newName']
 	));
 }
-\Fr\LS::init();
 ?>
 <html>
 	<head></head>
