@@ -20,6 +20,7 @@ logSys includes but not limited to :
 7. Simple Examples to get you started
 8. Lightweight (**42 KB of Awesomeness...**)
 9. Maintained frequently
+10. Email Functionality
 
 Instructions
 ============
@@ -29,3 +30,7 @@ The [Blog Post](http://subinsb.com/php-logsys) contains entire information on ho
 In case of GitHub repo, the following folders contain examples of usage
 * example-basic
 * example-two-step-login
+
+PHP's mail() function is used to send emails. Most likely, emails sent through it will reach the SPAM folder. To avoid this, add an email function in `config` -> `basic` -> `email_callback`.
+
+I recommend to use [PHPMailer](https://github.com/PHPMailer/PHPMailer/) (SMTP) or [Mailgun API](https://mailgun.com) to send emails.
