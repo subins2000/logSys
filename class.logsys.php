@@ -167,7 +167,7 @@ class LS {
        */
       "expire" => "+30 days",
       "path" => "/",
-      "domain" => "local.sim",
+      "domain" => "",
     ),
     
     /**
