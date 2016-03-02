@@ -1,4 +1,9 @@
 <?php
+/**
+ * For Development Purposes
+ */
+ini_set("display_errors", "on");
+
 require __DIR__ . "/../class.logsys.php";
 \Fr\LS::config(array(
   "db" => array(

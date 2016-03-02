@@ -22,14 +22,12 @@ namespace Fr;
 /**
 .---------------------------------------------------------------------------.
 |  Software:      PHP Login System - PHP logSys                             |
-|  Version:       0.5 (Last Updated on 2015 November 3)                     |
+|  Version:       0.5 (Last Updated on 2016 March 2)                        |
 |  Contact:       http://github.com/subins2000/logsys                       |
 |  Documentation: https://subinsb.com/php-logsys                            |
 |  Support:       http://subinsb.com/ask/php-logsys                         |
 '---------------------------------------------------------------------------'
 */
-
-ini_set("display_errors", "on");
 
 class LS {
 
@@ -169,7 +167,7 @@ class LS {
        */
       "expire" => "+30 days",
       "path" => "/",
-      "domain" => "",
+      "domain" => "local.sim",
     ),
     
     /**
@@ -416,7 +414,7 @@ class LS {
         if(substr($status, 0, 2) == "b-"){
           $blockedTime = substr($status, 2);
           if(time() < $blockedTime){
-            $block = true;
+            $blocked = true;
             return array(
               "status"  => "blocked",
               "minutes" => round(abs($blockedTime - time()) / 60, 0),
@@ -437,7 +435,7 @@ class LS {
          * Hence, before calling \Fr\LS::login() in the login page, it is
          * required to check whether the password fieldis left blank
          */
-        if(!isset($block) && ($saltedPass == $us_pass || $password == "")){
+        if(!isset($blocked) && ($saltedPass == $us_pass || $password == "")){
           if($cookies === true){
             
             $_SESSION['logSyscuruser'] = $us_id;
@@ -449,10 +447,15 @@ class LS {
             }
             self::$loggedIn = true;
             
-            // Update the attempt status
-            self::updateUser(array(
-              "attempt" => "0" // No tries
-            ), $us_id);
+            if(self::$config['features']['block_brute_force'] === true){
+              /**
+               * If Brute Force Protection is Enabled,
+               * Reset the attempt status
+               */
+              self::updateUser(array(
+                "attempt" => "0"
+              ), $us_id);
+            }
             
             // Redirect
             if(self::$init_called){
@@ -468,26 +471,35 @@ class LS {
             return $us_id;
           }
         }else{
-          // Incorrect password
+          /**
+           * Incorrect password
+           * ------------------
+           * Check if brute force protection is enabled
+           */
           if(self::$config['features']['block_brute_force'] === true){
-            // Checking for brute force is enabled
+            $max_tries = self::$config['brute_force']['tries'];
+            
             if($status == ""){
               // User was not logged in before
               self::updateUser(array(
                 "attempt" => "1" // Tried 1 time
               ), $us_id);
-            }else if($status == 5){
+            }else if($status == $max_tries){
+              /**
+               * Account Blocked. User will be only able to
+               * re-login at the time in UNIX timestamp
+               */
+              $eligible_for_next_login_time = strtotime("+". self::$config['brute_force']['time_limit'] ." seconds", time());
               self::updateUser(array(
-                /**
-                 * Account Blocked. User only able to
-                 * re-login at the time in UNIX timestamp
-                 */
-                "attempt" => "b-" . strtotime("+". self::$config['brute_force']['time_limit'] ." seconds", time())
+                "attempt" => "b-" . $eligible_for_next_login_time
               ), $us_id);
-            }else if(substr($status, 0, 2) == "b-"){
-              // Account blocked
-            }else if($status < 5){
-              // If the attempts are less than 5 and not 5
+              return array(
+                "status"  => "blocked",
+                "minutes" => round(abs($eligible_for_next_login_time - time()) / 60, 0),
+                "seconds" => round(abs($eligible_for_next_login_time - time()) / 60*60, 2)
+              );
+            }else if($status < $max_tries){
+              // If the attempts are less than Max and not Max
               self::updateUser(array(
                 "attempt" => $status + 1 // Increase the no of tries by +1.
               ), $us_id);

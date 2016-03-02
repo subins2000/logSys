@@ -1,4 +1,9 @@
 <?php
+/**
+ * For Development Purposes
+ */
+ini_set("display_errors", "on");
+
 require __DIR__ . "/../class.logsys.php";
 $config = array(
   "basic" => array(
@@ -34,4 +39,7 @@ $config = array(
     }
   )
 );
+/**
+ * Insert config to logSys
+ */
 \Fr\LS::config($config);
