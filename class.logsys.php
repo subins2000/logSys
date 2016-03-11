@@ -22,7 +22,7 @@ namespace Fr;
 /**
 .---------------------------------------------------------------------------.
 |  Software:      PHP Login System - PHP logSys                             |
-|  Version:       0.5 (Last Updated on 2016 March 2)                        |
+|  Version:       0.5 (Last Updated on 2016 March 11)                       |
 |  Contact:       http://github.com/subins2000/logsys                       |
 |  Documentation: https://subinsb.com/php-logsys                            |
 |  Support:       http://subinsb.com/ask/php-logsys                         |
@@ -1078,7 +1078,7 @@ class LS {
      * If there is a callback for email sending, use it else PHP's mail()
      */
     if(is_callable(self::$config['basic']['email_callback'])){
-      self::$config['basic']['email_callback']($email, $subject, $body);
+      call_user_func_array(self::$config['basic']['email_callback'], array($email, $subject, $body));
     }else{
       $headers = array();
       $headers[] = "MIME-Version: 1.0";
