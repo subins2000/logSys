@@ -43,4 +43,20 @@ CREATE TABLE IF NOT EXISTS `user_devices` (
   `token` varchar(15) NOT NULL COMMENT 'A unique token for the user''s device',
   `last_access` varchar(20) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+
+
+--
+-- Table structure for table `user_yubikeys`
+--
+
+CREATE TABLE IF NOT EXISTS `user_yubikeys` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `uid` int(11) NOT NULL COMMENT 'The user''s ID',
+  `keyid` varchar(12) NOT NULL COMMENT 'Yubikey Unique Identifier',
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+
+
+
+

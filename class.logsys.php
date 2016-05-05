@@ -1,5 +1,7 @@
 <?php
 namespace Fr;
+require_once __DIR__ . '/Yubico.php';
+
 
 /**
 .---------------------------------------------------------------------------.
@@ -58,9 +60,17 @@ class LS {
       "password" => "",
       "name" => "",
       "table" => "users",
+      "keys_table" => "user_yubikeys",
       "token_table" => "resetTokens"
     ),
-    
+    /**
+     * Client Id and Secret Key for the Yubico API
+     * DONT MAKE THIS PUBLIC
+     */
+    "yubi" => array(
+      "clientid" => "",
+      "secret" => ""
+    ),
     /**
      * Keys used for encryption
      * DONT MAKE THIS PUBLIC
@@ -88,6 +98,10 @@ class LS {
        * Enable/Disable Login using Username & E-Mail
        */
       "email_login" => true,
+      /**
+       * Enable/Disable Login using Yubikey
+       */
+      "yubi_login" => true,
       /**
        * Enable/Disable `Remember Me` feature
        */
@@ -380,7 +394,7 @@ class LS {
    * As of version 0.4, it is required to include the remember_me parameter
    * when calling this function to avail the "Remember Me" feature.
    */
-  public static function login($username, $password, $remember_me = false, $cookies = true){
+  public static function login($username, $password, $otp = '' , $remember_me = false, $cookies = true){
     self::construct("login");
     if(self::$db === true){
       /**
@@ -411,6 +425,12 @@ class LS {
         $status = $rows['attempt'];
         $saltedPass = hash('sha256', $password . self::$config['keys']['salt'] . $us_salt);
         
+
+        /**
+         * Check if user is blocked
+         */
+
+
         if(substr($status, 0, 2) == "b-"){
           $blockedTime = substr($status, 2);
           if(time() < $blockedTime){
@@ -427,6 +447,50 @@ class LS {
             ), $us_id);
           }
         }
+
+        /**
+         * If Yubikey Login is enabled, 
+         * check if provided key is associated with user 
+         * and valudate OTP by Yubico.
+         */
+        if (self::$config['features']['yubi_login'] === true){
+          
+
+          $idkey = substr($otp, 0, 12);
+          $query = "SELECT `id`, `uid` FROM `". self::$config['db']['keys_table'] ."` WHERE `keyid`=:ykid ORDER BY `id` LIMIT 1";
+
+          $sql = self::$dbh->prepare($query);
+          $sql->bindValue(":ykid", $idkey);
+          $sql->execute();
+
+          if($sql->rowCount() == 0){
+            // Token not found in the database
+            return false;
+          }else{
+            // Token found in the database 
+            /**
+             * Get the key details
+             */
+            $rows = $sql->fetch(\PDO::FETCH_ASSOC);
+            $k_id = $rows['id'];
+            $k_uid = $rows['uid'];
+            if (!($k_uid == $us_id) ) {
+              // Token belongs to another user
+              return false;
+            }else{
+              // Token belongs to user -> Get Yubico Validation
+              $yubi = new \Auth_Yubico( self::$config['yubi']['clientid'], self::$config['yubi']['secret']);
+              $auth = $yubi->verify($otp);
+
+              if (\PEAR::isError($auth)) {
+                // OTP validation failed
+                return false;
+              } 
+            }
+          }
+        }
+
+
         /**
          * Why login if password is empty ?
          * --------------------------------
@@ -545,6 +609,40 @@ class LS {
       return true;
     }
   }
+
+  /**
+   * A function to register a new yubikey to a given user.
+   * Recieves a username and otp in parameters.
+   */
+  public static function register_key( $identification, $otp){
+    self::construct();
+
+    $keyid = substr ($otp, 0, 12);
+    if( self::keyExists($keyid)){
+      return "exists";
+    }else{
+      if(self::$config['features']['email_login'] === true){ 
+          $query = "SELECT `id` FROM `". self::$config['db']['table'] ."` WHERE `username`=:login OR `email`=:login";
+      }else{
+        $query = "SELECT `id` FROM `". self::$config['db']['table'] ."` WHERE `username`=:login";
+      }
+      $sql = self::$dbh->prepare($query);
+      $sql->execute(array(
+        ":login" => $identification
+      ));
+      $rows = $sql->fetch(\PDO::FETCH_ASSOC);
+      $uid = $rows['id'];
+
+      $sql = self::$dbh->prepare("INSERT INTO `". self::$config['db']['keys_table'] ."` (`id`, `uid`, `keyid`) VALUES(NULL, :user, :key)");
+      
+      $sql->bindValue(":user", $uid);
+      $sql->bindValue(":key", $keyid);
+      $sql->execute();
+      return true;
+    }
+  }
+
+  
   
   /**
    * Logout the current logged in user by deleting the cookies and destroying session
@@ -737,6 +835,24 @@ class LS {
     ));
     return $sql->rowCount() == 0 ? false : true;
   }
+
+
+/**
+   * Check if yubikey is already registered to a user.
+   * Recieves the key ID as parameter.
+   */
+  public static function keyExists($identification){
+    self::construct();
+    if(self::$config['features']['yubi_login'] === true){
+      $query = "SELECT `id` FROM `". self::$config['db']['keys_table'] ."` WHERE `keyid`=:key";
+    }
+    $sql = self::$dbh->prepare($query);
+    $sql->execute(array(
+      ":key" => $identification
+    ));
+    return $sql->rowCount() == 0 ? false : true;
+  }
+
   
   /**
    * Fetches data of user in database. Returns a single value or an
@@ -763,6 +879,31 @@ class LS {
     }
     return $data;
   }
+
+
+/**
+   * Fetches data of keys associated to a given user in database. 
+   * Returns a single value or an
+   * array of value according to parameteres given to the function
+   */
+  public static function getKeys($user = null){
+    self::construct();
+    if($user == null){
+      $user = self::$user;
+    }
+    
+    $sql = self::$dbh->prepare("SELECT * FROM `". self::$config['db']['keys_table'] ."` WHERE `uid` =:login ORDER BY `id`");
+    $sql->bindValue(":login", $user);
+    $sql->execute();
+    
+    $data = $sql->fetch(\PDO::FETCH_ASSOC);
+    /*if( !is_array($what) ){
+      $data = $what == "*" ? $data : $data[$what];
+    }*/
+    return $data;
+  }
+
+
   
   /**
    * Updates the info of user in DB
