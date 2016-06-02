@@ -15,7 +15,7 @@ require "config.php";
         $identification = $_POST['login'];
         $password = $_POST['password'];
         if($identification == "" || $password == ""){
-          echo "<h2>Error</h2><p>Username / Password left blank !</p>";
+          $msg = array("Error", "Username / Password Wrong !");
         }else{
           $login = \Fr\LS::twoStepLogin($identification, $password, isset($_POST['remember_me']));
           if($login === false){
@@ -40,8 +40,7 @@ require "config.php";
           </label><br/>
           <label>
             <p>
-              <input type="checkbox" name="remember_me" id="remember_me" />
-              <label for="remeber_me">Remember Me</label>
+              <input type="checkbox" name="remember_me"/> Remember Me
             </p>
           </label>
           <div clear></div>
