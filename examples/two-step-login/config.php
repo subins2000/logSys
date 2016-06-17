@@ -4,7 +4,7 @@
  */
 ini_set("display_errors", "on");
 
-require __DIR__ . "/../class.logsys.php";
+require __DIR__ . "/../../src/class.logsys.php";
 $config = array(
   "basic" => array(
     "company" => "My Site",
@@ -22,14 +22,17 @@ $config = array(
     "auto_init" => true,
     "two_step_login" => true
   ),
+  /**
+   * These are my localhost paths, ABSOLUTELY change it to yours
+   */
   "pages" => array(
     "no_login" => array(
-      "/Francium/logSys/example-two-step-login/",
-      "/Francium/logSys/example-two-step-login/reset.php",
-      "/Francium/logSys/example-two-step-login/register.php"
+      "/Francium/logSys/examples/two-step-login/",
+      "/Francium/logSys/examples/two-step-login/reset.php",
+      "/Francium/logSys/examples/two-step-login/register.php"
     ),
-    "login_page" => "/Francium/logSys/example-two-step-login/login.php",
-    "home_page" => "/Francium/logSys/example-two-step-login/home.php"
+    "login_page" => "/Francium/logSys/examples/two-step-login/login.php",
+    "home_page" => "/Francium/logSys/examples/two-step-login/home.php"
   ),
   "two_step_login" => array(
     "instruction" => "A token was sent to your E-Mail Address. Please see the mail in your inbox and paste the token found in the textbox below :",

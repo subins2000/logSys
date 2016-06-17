@@ -10,17 +10,27 @@ Features
 
 logSys includes but not limited to :
 
-1. Basic Login/Register Function (Secured by PDO, SHA256).
-   Hashes passwords with random salt + site salt + password
-2. Password Reset (Forgot Password) functionality
-3. 2 Step Login (2 Step Verification by Mobile SMS/E-Mail)
-4. Custom fields
-5. Device Manager to know the devices that are currently logged in
-6. Debugging/Logging made simpler
-7. Simple Examples to get you started
-8. Lightweight (**42 KB of Awesomeness...**)
-9. Maintained frequently
-10. Email Functionality
+* Basic Login/Register
+* Secure - Uses PDO, Bcrypt & Protection against CSRF
+* Password Reset (Forgot Password) functionality
+* 2 Step Login (2 Step Verification by Mobile SMS/E-Mail)
+* Email Functionality
+* Add & use custom user data
+* **[Admin Panel](http://subinsb.com/logsys-admin)**
+* Device Manager to know the devices that are currently logged in
+* Debugging/Logging made simpler
+* Simple Examples to get you started
+* Lightweight (**42 KB of Awesomeness...**)
+* A very active project
+
+Installation
+============
+
+Simply require `class.logsys.php` file or :
+
+```bash
+composer require francium/logsys
+```
 
 Instructions
 ============

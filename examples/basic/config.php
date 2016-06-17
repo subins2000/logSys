@@ -4,7 +4,7 @@
  */
 ini_set("display_errors", "on");
 
-require __DIR__ . "/../class.logsys.php";
+require __DIR__ . "/../../src/class.logsys.php";
 \Fr\LS::config(array(
   "db" => array(
     "host" => "localhost",
@@ -20,10 +20,10 @@ require __DIR__ . "/../class.logsys.php";
   "pages" => array(
     "no_login" => array(
       "/Francium/logSys/",
-      "/Francium/logSys/example-basic/reset.php",
-      "/Francium/logSys/example-basic/register.php"
+      "/Francium/logSys/examples/basic/reset.php",
+      "/Francium/logSys/examples/basic/register.php"
     ),
-    "login_page" => "/Francium/logSys/example-basic/login.php",
-    "home_page" => "/Francium/logSys/example-basic/home.php"
+    "login_page" => "/Francium/logSys/examples/basic/login.php",
+    "home_page" => "/Francium/logSys/examples/basic/home.php"
   )
 ));
