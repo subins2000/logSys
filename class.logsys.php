@@ -24,7 +24,7 @@ require_once __DIR__ . '/Yubico.php';
 /**
 .---------------------------------------------------------------------------.
 |  Software:      PHP Login System - PHP logSys                             |
-|  Version:       0.5 (Last Updated on 2016 March 11)                       |
+|  Version:       0.6 (Last Updated on 2016 June 17)                        |
 |  Contact:       http://github.com/subins2000/logsys                       |
 |  Documentation: https://subinsb.com/php-logsys                            |
 |  Support:       http://subinsb.com/ask/php-logsys                         |
