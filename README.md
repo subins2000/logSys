@@ -34,3 +34,16 @@ In case of GitHub repo, the following folders contain examples of usage
 PHP's mail() function is used to send emails. Most likely, emails sent through it will reach the SPAM folder. To avoid this, add an email function in `config` -> `basic` -> `email_callback`.
 
 I recommend to use [PHPMailer](https://github.com/PHPMailer/PHPMailer/) (SMTP) or [Mailgun API](https://mailgun.com) to send emails.
+
+Versions
+========
+
+## 0.6
+
+This version changes the algorithm used to hash passwords. If you're using an old version of logSys, you **cannoot** upgrade without resetting the existing passwords in your database.
+
+### Upgrade
+
+* (For upgrading from old versions) Remove all existing values in `password` column in your table
+* Remove `password_salt` column from your users' table and set the length of the `password` column to `255`.
+* Update "class.logsys.php" file
