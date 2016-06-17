@@ -25,7 +25,7 @@ logSys includes but not limited to :
 Instructions
 ============
 
-The [Blog Post](http://subinsb.com/php-logsys) contains entire information on how to install and use logSys
+The **[Blog Post](http://subinsb.com/php-logsys)** contains the entire information on how to install and use logSys.
 
 In case of GitHub repo, the following folders contain examples of usage
 * example-basic
@@ -39,6 +39,8 @@ Versions
 ========
 
 ## 0.6
+
+**Requires PHP 5.5** - If you want to use it in an older PHP version, get the **password.php** file from [here](https://github.com/ircmaxell/password_compat/blob/master/lib/password.php) and include it before loading `class.logsys.php` file.
 
 This version changes the algorithm used to hash passwords. If you're using an old version of logSys, you **cannoot** upgrade without resetting the existing passwords in your database.
 
