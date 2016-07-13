@@ -22,10 +22,9 @@ namespace Fr;
 /**
 .---------------------------------------------------------------------------.
 |  Software:      PHP Login System - PHP logSys                             |
-|  Version:       0.6 (Last Updated on 2016 June 17)                        |
-|  Contact:       http://github.com/subins2000/logsys                       |
-|  Documentation: https://subinsb.com/php-logsys                            |
-|  Support:       http://subinsb.com/ask/php-logsys                         |
+|  Version:       0.6.1 (Last Updated on 2016 July 13)                      |
+|  Documentation: http://subinsb.com/php-logsys                             |
+|  Contribute:    https://github.com/subins2000/logSys                      |
 '---------------------------------------------------------------------------'
 */
 
@@ -325,7 +324,7 @@ class LS {
         if(self::$config['features']['two_step_login'] === true && self::$loggedIn){
           $login_page = self::curPage() === self::$config['pages']['login_page'];
 
-          if(!isset($_COOKIE['logSysdevice']) && $login_page === false){
+          if(!isset($_SESSION['device_check']) && !isset($_COOKIE['logSysdevice']) && $login_page === false){
             /**
              * The device cookie is not even set. So, logout
              */
@@ -343,6 +342,9 @@ class LS {
               self::logout();
               $called_from = "login";
             }else{
+              /**
+               * This session has been checked and verified
+               */
               $_SESSION['device_check'] = 1;
             }
           }
@@ -876,6 +878,11 @@ class LS {
           $sql = self::$dbh->prepare("INSERT INTO `". self::$config['two_step_login']['devices_table'] ."` (`uid`, `token`, `last_access`) VALUES (?, ?, NOW())");
           $sql->execute(array($uid, $device_token));
           setcookie("logSysdevice", $device_token, strtotime(self::$config['two_step_login']['expire']), self::$config['cookies']['path'], self::$config['cookies']['domain']);
+        }else{
+          /**
+           * Verify login for this session
+           */
+          $_SESSION["device_check"] = "1";
         }
         
         /**
