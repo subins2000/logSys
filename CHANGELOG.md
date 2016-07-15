@@ -2,9 +2,13 @@
 
 [Shamil Kashmeri](https://plus.google.com/u/0/105291845791114608759) asked whether he should upgrade from 0.1 to 0.3 and I thought it would be a good idea for making a changelog instead of explaining the new features everytime someone asks. So, here you go :
 
+## 0.6.2
+
+* [New! #16](https://github.com/subins2000/logSys/issues/16)
+
 ## 0.6.1
 
-* Fixed bug #15
+* [Fixed bug #15](https://github.com/subins2000/logSys/issues/16)
 
 ## 0.6
 
