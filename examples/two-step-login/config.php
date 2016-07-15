@@ -23,13 +23,16 @@ $config = array(
     "two_step_login" => true
   ),
   /**
-   * These are my localhost paths, ABSOLUTELY change it to yours
+   * These are my localhost paths, change it to yours
    */
   "pages" => array(
     "no_login" => array(
       "/Francium/logSys/examples/two-step-login/",
       "/Francium/logSys/examples/two-step-login/reset.php",
       "/Francium/logSys/examples/two-step-login/register.php"
+    ),
+    "everyone" => array(
+      "/Francium/logSys/examples/two-step-login/status.php"
     ),
     "login_page" => "/Francium/logSys/examples/two-step-login/login.php",
     "home_page" => "/Francium/logSys/examples/two-step-login/home.php"

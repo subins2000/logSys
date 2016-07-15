@@ -22,7 +22,7 @@ namespace Fr;
 /**
 .---------------------------------------------------------------------------.
 |  Software:      PHP Login System - PHP logSys                             |
-|  Version:       0.6.1 (Last Updated on 2016 July 13)                      |
+|  Version:       0.6.2 (Last Updated on 2016 July 15)                      |
 |  Documentation: http://subinsb.com/php-logsys                             |
 |  Contribute:    https://github.com/subins2000/logSys                      |
 '---------------------------------------------------------------------------'
@@ -139,20 +139,26 @@ class LS {
       /**
        * Pages that doesn't require logging in.
        * Exclude login page, but include REGISTER page.
-       * Use Relative links or $_SERVER['REQUEST_URI']
+       * Use RELATIVE links. To find the relative link of
+       * a page, do var_dump(Fr\LS::curPage());
        */
-      "no_login" => array(
-        
-      ),
+      "no_login" => array(),
+      
+      /**
+       * Pages that both logged in and not logged in users can access
+       */
+      "everyone" => array(),
+      
       /**
        * The login page. ex : /login.php or /accounts/login.php
        */
       "login_page" => "",
+      
       /**
        * The home page. The main page for logged in users.
        * logSys redirects to here after user logs in
        */
-      "home_page" => "",
+      "home_page" => ""
     ),
     
     /**
@@ -369,9 +375,14 @@ class LS {
    */
   public static function init() {
     self::construct();
-    if(self::$loggedIn === true && array_search(self::curPage(), self::$config['pages']['no_login']) !== false){
+    if(in_array(self::curPage(), self::$config['pages']['everyone'])){
+      /**
+       * No redirects as this page can be accessed
+       * by anyone whether he/she is logged in or not
+       */
+    }else if(self::$loggedIn === true && in_array(self::curPage(), self::$config['pages']['no_login'])){
       self::redirect(self::$config['pages']['home_page']);
-    }elseif(self::$loggedIn === false && array_search(self::curPage(), self::$config['pages']['no_login']) === false){
+    }else if(self::$loggedIn === false && array_search(self::curPage(), self::$config['pages']['no_login']) === false){
       self::redirect(self::$config['pages']['login_page']);
     }
     self::$init_called = true;

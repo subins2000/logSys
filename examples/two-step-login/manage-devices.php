@@ -26,7 +26,7 @@ if(isset($_GET['revoke_device']) && \Fr\LS::csrf()){
       }
       $devices = \Fr\LS::getDevices();
       if(count($devices) == 0){
-        echo "<p>No devices are authorized to use your account without 2 Step Verification.</p>";
+        echo "<p>No devices are authorized to use your account by skipping 2 Step Verification.</p>";
       }else{
         echo "<table border='1' cellpadding='10px'>
         <thead>

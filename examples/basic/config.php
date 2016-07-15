@@ -23,6 +23,9 @@ require __DIR__ . "/../../src/class.logsys.php";
       "/Francium/logSys/examples/basic/reset.php",
       "/Francium/logSys/examples/basic/register.php"
     ),
+    "everyone" => array(
+      "/Francium/logSys/examples/two-step-login/status.php"
+    ),
     "login_page" => "/Francium/logSys/examples/basic/login.php",
     "home_page" => "/Francium/logSys/examples/basic/home.php"
   )
