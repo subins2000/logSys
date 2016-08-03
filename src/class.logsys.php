@@ -609,7 +609,7 @@ class LS {
          * The token is valid, display the new password form
          */
         $html = "<p>The Token key was Authorized. Now, you can change the password</p>";
-        $html .= "<form action='{$_SERVER['PHP_SELF']}' method='POST'>";
+        $html .= "<form action='".self::curPageURL()."' method='POST'>";
           $html .= "<input type='hidden' name='token' value='{$reset_pass_token}' />";
           $html .= "<label>";
             $html .= "<p>New Password</p>";
