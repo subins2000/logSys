@@ -22,7 +22,7 @@ namespace Fr;
 /**
 .---------------------------------------------------------------------------.
 |  Software:      PHP Login System - PHP logSys                             |
-|  Version:       0.6.2 (Last Updated on 2016 July 15)                      |
+|  Version:       0.6.3 (Last Updated on 2016 July 30)                      |
 |  Documentation: http://subinsb.com/php-logsys                             |
 |  Contribute:    https://github.com/subins2000/logSys                      |
 '---------------------------------------------------------------------------'
@@ -408,19 +408,20 @@ class LS {
       
       $sql = self::$dbh->prepare($query);
       $sql->bindValue(":login", $username);
-      $sql->execute();
       
-      if($sql->rowCount() == 0){
+      $sql->execute();
+      $cols = $sql->fetch(\PDO::FETCH_ASSOC);
+      
+      if(empty($cols)){
         // No such user like that
         return false;
       }else{
         /**
          * Get the user details
          */
-        $rows = $sql->fetch(\PDO::FETCH_ASSOC);
-        $us_id = $rows['id'];
-        $us_pass = $rows['password'];
-        $status = $rows['attempt'];
+        $us_id = $cols['id'];
+        $us_pass = $cols['password'];
+        $status = $cols['attempt'];
         
         if(substr($status, 0, 2) == "b-"){
           $blockedTime = substr($status, 2);
@@ -598,10 +599,10 @@ class LS {
        * The user gave the password reset token. Check if the token is valid.
        */
       $reset_pass_token = urldecode($_GET['resetPassToken']);
-      $sql = self::$dbh->prepare("SELECT `uid` FROM `". self::$config['db']['token_table'] ."` WHERE `token` = ?");
+      $sql = self::$dbh->prepare("SELECT COUNT(1) FROM `". self::$config['db']['token_table'] ."` WHERE `token` = ?");
       $sql->execute(array($reset_pass_token));
       
-      if($sql->rowCount() == 0 || $reset_pass_token == ""){
+      if($sql->fetchColumn() == 0 || $reset_pass_token == ""){
         echo "<h3>Error : Wrong/Invalid Token</h3>";
         $curStatus = "invalidToken"; // The token user gave was not valid
       }else{
@@ -632,7 +633,9 @@ class LS {
       $sql = self::$dbh->prepare("SELECT `uid` FROM `". self::$config['db']['token_table'] ."` WHERE `token` = ?");
       $sql->execute(array($reset_pass_token));
       
-      if( $sql->rowCount() == 0 || $reset_pass_token == "" ){
+      $user = $sql->fetchColumn();
+      
+      if( $user == null || $reset_pass_token == null ){
         echo "<h3>Error : Wrong/Invalid Token</h3>";
         $curStatus = "invalidToken"; // The token user gave was not valid
       }else{
@@ -648,7 +651,7 @@ class LS {
            * change the password as \Fr\LS::changePassword()
            * requires the user to be logged in.
            */
-          self::$user = $sql->fetchColumn();
+          self::$user = $user;
           self::$loggedIn = true;
           
           if(self::changePassword($_POST['logSysForgotPassNewPassword'])){
@@ -677,14 +680,16 @@ class LS {
       }else{
         $sql = self::$dbh->prepare("SELECT `email`, `id` FROM `". self::$config['db']['table'] ."` WHERE `username`=:login OR `email`=:login");
         $sql->bindValue(":login", $identification);
+        
         $sql->execute();
-        if($sql->rowCount() == 0){
+        $cols  = $sql->fetch(\PDO::FETCH_ASSOC);
+        
+        if(empty($cols)){
           echo "<h3>Error : User Not Found</h3>";
           $curStatus = "userNotFound"; // The user with the identity given was not found in the users database
         }else{
-          $rows  = $sql->fetch(\PDO::FETCH_ASSOC);
-          $email = $rows['email'];
-          $uid   = $rows['id'];
+          $email = $cols['email'];
+          $uid   = $cols['id'];
           
           /**
            * Make token and insert into the table
@@ -735,15 +740,15 @@ class LS {
   public static function userExists($identification){
     self::construct();
     if(self::$config['features']['email_login'] === true){
-      $query = "SELECT `id` FROM `". self::$config['db']['table'] ."` WHERE `username`=:login OR `email`=:login";
+      $query = "SELECT COUNT(1) FROM `". self::$config['db']['table'] ."` WHERE `username`=:login OR `email`=:login";
     }else{
-      $query = "SELECT `id` FROM `". self::$config['db']['table'] ."` WHERE `username`=:login";
+      $query = "SELECT COUNT(1) FROM `". self::$config['db']['table'] ."` WHERE `username`=:login";
     }
     $sql = self::$dbh->prepare($query);
     $sql->execute(array(
       ":login" => $identification
     ));
-    return $sql->rowCount() == 0 ? false : true;
+    return $sql->fetchColumn() == "0" ? false : true;
   }
   
   /**
