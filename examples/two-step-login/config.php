@@ -4,7 +4,7 @@
  */
 ini_set("display_errors", "on");
 
-require __DIR__ . "/../../src/class.logsys.php";
+require __DIR__ . "/../../src/LS.php";
 $config = array(
   "basic" => array(
     "company" => "My Site",
