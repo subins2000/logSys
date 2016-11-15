@@ -44,7 +44,12 @@ class LS {
     "basic" => array(
       "company" => "My Site",
       "email" => "email@mysite.com",
-      "email_callback" => 0
+      "email_callback" => false,
+
+      /**
+       * Callback to override output content
+       */
+      "output_callback" => false
     ),
     
     /**
@@ -242,6 +247,67 @@ class LS {
     if($config != null){
       self::$config = $config;
     }
+
+    /**
+     * Callback to display messages for different states
+     * @var array
+     */
+    self::$default_config["basic"]["output_callback"] = function($state, $extraInfo = array()){
+      if($state === "invalidToken")
+        return "<h3>Error : Wrong/Invalid Token</h3>";
+      else if($state === "fieldsLeftBlank")
+        return "<h3>Error : Fields Left Blank</h3>";
+      else if($state === "passwordDontMatch")
+        return "<h3>Error : Passwords Don't Match</h3>";
+      else if($state === "passwordChanged")
+        return "<h3>Success : Password Reset Successful</h3><p>You may now login with your new password.</p>";
+      else if($state === "identityNotProvided")
+        return "<h3>Error : {$extraInfo["identity_type"]} not provided</h3>";
+      else if($state === "userNotFound")
+        return "<h3>Error : User Not Found</h3>";
+      else if($state === "notLoggedIn")
+        return "<h3>Error : Not Logged In</h3>";
+      else if($state === "twoStepLoginVerifyForm")
+        return "<form action='". self::curPageURL() ."' method='POST'>
+          <p>". self::$config['two_step_login']['instruction'] ."</p>
+          <label>
+            <p>Token Received</p>
+            <input type='text' name='logSys_two_step_login-token' placeholder='Paste the token here... (case sensitive)' />
+          </label>
+          <label style='display: block;'>
+            <span>Remember this device ?</span>
+            <input type='checkbox' name='logSys_two_step_login-dontask' />
+          </label>
+          <input type='hidden' name='logSys_two_step_login-uid' value='". $extraInfo["uid"] ."' />
+          ". ($extraInfo["remember_me"] === true ? "<input type='hidden' name='logSys_two_step_login-remember_me' />" : "") ."
+          <label>
+            <button>Verify</button>
+          </label>
+        </form>";
+      else if($state === "resetPasswordRequestForm")
+        return "<form action='". self::curPageURL() ."' method='POST'>
+          <label>
+            <p>{$extraInfo["identity_type"]}</p>
+            <input type='text' id='logSysIdentification' placeholder='Enter your {$extraInfo["identity_type"]}' size='25' name='identification' />
+          </label>
+          <p><button name='logSysForgotPass' type='submit'>Reset Password</button></p>
+        </form>";
+      else if($state === "resetPasswordForm")
+        return "<p>The Token key was Authorized. Now, you can change the password</p>
+          <form action='". self::curPageURL() ."' method='POST'>
+            <input type='hidden' name='token' value='{$extraInfo["resetPassToken"]}' />
+            <label>
+              <p>New Password</p>
+              <input type='password' name='logSysForgotPassNewPassword' />
+            </label><br/>
+            <label>
+              <p>Retype Password</p>
+              <input type='password' name='logSysForgotPassRetypedPassword'/>
+            </label><br/>
+            <p><button name='logSysForgotPassChange'>Reset Password</button></p>
+          </form>";
+    };
+
     self::$config = array_replace_recursive(self::$default_config, self::$config);
     if($direct == true){
       self::construct();
@@ -575,6 +641,8 @@ class LS {
   
   /**
    * A function to handle the Forgot Password process
+   * Note: Forgot Password = Reset Password.
+   * logSys considers the both as same
    */
   public static function forgotPassword(){
     self::construct();
@@ -582,18 +650,14 @@ class LS {
     $identName = self::$config['features']['email_login'] === false ? "Username" : "Username / E-Mail";
     
     if( !isset($_POST['logSysForgotPass']) && !isset($_GET['resetPassToken']) && !isset($_POST['logSysForgotPassChange']) ){
-      $html = '<form action="'. self::curPageURL() .'" method="POST">';
-        $html .= "<label>";
-          $html .= "<p>{$identName}</p>";
-          $html .= "<input type='text' id='logSysIdentification' placeholder='Enter your {$identName}' size='25' name='identification' />";
-        $html .= "</label>";
-        $html .= "<p><button name='logSysForgotPass' type='submit'>Reset Password</button></p>";
-      $html .= "</form>";
-      echo $html;
+      echo self::getOutput("resetPasswordRequestForm", array(
+        "identity_type" => $identName
+      ));
+
       /**
        * The user had moved to the reset password form ie she/he is currently seeing the forgot password form
        */
-      $curStatus = "resetPasswordForm";
+      $curStatus = "resetPasswordRequestForm";
     }elseif( isset($_GET['resetPassToken']) && !isset($_POST['logSysForgotPassChange']) ){
       /**
        * The user gave the password reset token. Check if the token is valid.
@@ -603,30 +667,20 @@ class LS {
       $sql->execute(array($reset_pass_token));
       
       if($sql->fetchColumn() == 0 || $reset_pass_token == ""){
-        echo "<h3>Error : Wrong/Invalid Token</h3>";
         $curStatus = "invalidToken"; // The token user gave was not valid
+        echo self::getOutput($curStatus);
       }else{
         /**
          * The token is valid, display the new password form
          */
-        $html = "<p>The Token key was Authorized. Now, you can change the password</p>";
-        $html .= "<form action='".self::curPageURL()."' method='POST'>";
-          $html .= "<input type='hidden' name='token' value='{$reset_pass_token}' />";
-          $html .= "<label>";
-            $html .= "<p>New Password</p>";
-            $html .= "<input type='password' name='logSysForgotPassNewPassword' />";
-          $html .= "</label><br/>";
-          $html .= "<label>";
-            $html .= "<p>Retype Password</p>";
-            $html .= "<input type='password' name='logSysForgotPassRetypedPassword'/>";
-          $html .= "</label><br/>";
-          $html .= "<p><button name='logSysForgotPassChange'>Reset Password</button></p>";
-        $html .= "</form>";
-        echo $html;
+        echo self::getOutput("resetPasswordForm", array(
+          "resetPassToken" => $reset_pass_token
+        ));
+
         /**
          * The token was correct, displayed the change/new password form
          */
-        $curStatus = "changePasswordForm";
+        $curStatus = "resetPasswordForm";
       }
     }elseif(isset($_POST['logSysForgotPassChange']) && isset($_POST['logSysForgotPassNewPassword']) && isset($_POST['logSysForgotPassRetypedPassword'])){
       $reset_pass_token = urldecode($_POST['token']);
@@ -636,15 +690,15 @@ class LS {
       $user = $sql->fetchColumn();
       
       if( $user == null || $reset_pass_token == null ){
-        echo "<h3>Error : Wrong/Invalid Token</h3>";
         $curStatus = "invalidToken"; // The token user gave was not valid
+        echo self::getOutput($curStatus);
       }else{
         if($_POST['logSysForgotPassNewPassword'] == "" || $_POST['logSysForgotPassRetypedPassword'] == ""){
-          echo "<h3>Error : Passwords Fields Left Blank</h3>";
           $curStatus = "fieldsLeftBlank";
+          echo self::getOutput($curStatus);
         }elseif( $_POST['logSysForgotPassNewPassword'] != $_POST['logSysForgotPassRetypedPassword'] ){
-          echo "<h3>Error : Passwords Don't Match</h3>";
           $curStatus = "passwordDontMatch"; // The new password and retype password submitted didn't match
+          echo self::getOutput($curStatus);
         }else{
           /**
            * We must create a fake assumption that the user is logged in to
@@ -664,8 +718,8 @@ class LS {
             $sql = self::$dbh->prepare("DELETE FROM `". self::$config['db']['token_table'] ."` WHERE `token` = ?");
             $sql->execute(array($reset_pass_token));
             
-            echo "<h3>Success : Password Reset Successful</h3><p>You may now login with your new password.</p>";
             $curStatus = "passwordChanged"; // The password was successfully changed
+            echo self::getOutput($curStatus);
           }
         }
       }
@@ -675,8 +729,10 @@ class LS {
        */
       $identification = $_POST['identification'];
       if($identification == ""){
-        echo "<h3>Error : {$identName} not provided</h3>";
         $curStatus = "identityNotProvided"; // The identity was not given
+        echo self::getOutput($curStatus, array(
+          "identity_type" => $identName
+        ));
       }else{
         $sql = self::$dbh->prepare("SELECT `email`, `id` FROM `". self::$config['db']['table'] ."` WHERE `username`=:login OR `email`=:login");
         $sql->bindValue(":login", $identification);
@@ -685,8 +741,8 @@ class LS {
         $cols  = $sql->fetch(\PDO::FETCH_ASSOC);
         
         if(empty($cols)){
-          echo "<h3>Error : User Not Found</h3>";
           $curStatus = "userNotFound"; // The user with the identity given was not found in the users database
+          echo self::getOutput($curStatus);
         }else{
           $email = $cols['email'];
           $uid   = $cols['id'];
@@ -728,7 +784,7 @@ class LS {
       $sql->execute(array($hashedPass, self::$user));
       return true;
     }else{
-      echo "<h3>Error : Not Logged In</h3>";
+      echo self::getOutput("notLoggedIn");
       return "notLoggedIn";
     }
   }
@@ -881,7 +937,7 @@ class LS {
          * so that the user would have to login again
          */
         $_SESSION['logSys_two_step_login-first_step'] = '0';
-        echo "<h3>Error : Wrong/Invalid Token</h3>";
+        echo self::getOutput("invalidToken");
         return "invalidToken";
       }else{
         /**
@@ -969,23 +1025,10 @@ class LS {
           /**
            * Display the form
            */
-          $html = "<form action='". self::curPageURL() ."' method='POST'>
-            <p>". self::$config['two_step_login']['instruction'] ."</p>
-            <label>
-              <p>Token Received</p>
-              <input type='text' name='logSys_two_step_login-token' placeholder='Paste the token here... (case sensitive)' />
-            </label>
-            <label style='display: block;'>
-              <span>Remember this device ?</span>
-              <input type='checkbox' name='logSys_two_step_login-dontask' />
-            </label>
-            <input type='hidden' name='logSys_two_step_login-uid' value='". $uid ."' />
-            ". ($remember_me === true ? "<input type='hidden' name='logSys_two_step_login-remember_me' />" : "") ."
-            <label>
-              <button>Verify</button>
-            </label>
-          </form>";
-          echo $html;
+          echo self::getOutput("twoStepLoginVerifyForm", array(
+            "remember_me" => $remember_me,
+            "uid" => $uid
+          ));
           return "formDisplay";
         }else{
           self::log("two_step_login: Token Callback not present");
@@ -1026,6 +1069,23 @@ class LS {
         unset($_SESSION['device_check']);
       }
       return $sql->rowCount() == 1;
+    }
+  }
+
+  /**
+   * Get output for each states
+   * @param  string $state     The output of the state
+   * @param  array  $extraInfo Extra parameters about the state
+   * @return string            HTML output
+   */
+  public static function getOutput($state, $extraInfo = array()){
+    if(is_callable(self::$config["basic"]["output_callback"])){
+      return call_user_func_array(self::$config["basic"]["output_callback"], array(
+        $state,
+        $extraInfo
+      ));
+    }else{
+      return null;
     }
   }
   

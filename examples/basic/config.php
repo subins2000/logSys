@@ -6,6 +6,12 @@ ini_set("display_errors", "on");
 
 require __DIR__ . "/../../src/LS.php";
 \Fr\LS::config(array(
+  "basic" => array(
+    "output_callback" => function($state, $extraInfo){
+      
+    }
+  ),
+
   "db" => array(
     "host" => "localhost",
     "port" => 3306,
