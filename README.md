@@ -26,7 +26,14 @@ logSys includes but not limited to :
 Installation
 ============
 
-Simply require `class.logsys.php` file or :
+Simply download [`LS.php`](https://github.com/subins2000/logSys/blob/master/src/LS.php) file and include it in PHP :
+
+```php
+<?php
+require_once "LS.php";
+```
+
+or use [Composer](http://getcomposer.org) :
 
 ```bash
 composer require francium/logsys
