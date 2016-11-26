@@ -370,14 +370,22 @@ class LS {
         array_push(self::$config['pages']['no_login'], self::$config['pages']['login_page']);
 
         if(self::$config["db"]["type"] === "sqlite"){
-          self::$dbh = new \PDO("sqlite:" . self::$config["db"]["sqlite_path"], self::$config["db"]["username"], self::$config["db"]["password"]);
+          self::$dbh = new \PDO("sqlite:" . self::$config["db"]["sqlite_path"], self::$config["db"]["username"], self::$config["db"]["password"],
+            array(
+              \PDO::ATTR_PERSISTENT => true,
+              \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
+          ));
 
           /**
            * Enable Multithreading Read/Write
            */
           self::$dbh->exec("PRAGMA journal_mode=WAL;");
         }else{
-          self::$dbh = new \PDO("mysql:dbname=". self::$config['db']['name'] .";host=". self::$config['db']['host'] .";port=". self::$config['db']['port']. ";charset=utf8", self::$config['db']['username'], self::$config['db']['password']);
+          self::$dbh = new \PDO("mysql:dbname=". self::$config['db']['name'] .";host=". self::$config['db']['host'] .";port=". self::$config['db']['port']. ";charset=utf8", self::$config['db']['username'], self::$config['db']['password'],
+            array(
+              \PDO::ATTR_PERSISTENT => true,
+              \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
+          ));
         }
 
         self::$db = true;
