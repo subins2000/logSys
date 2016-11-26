@@ -10,12 +10,12 @@
          stopOnFailure="false"
          syntaxCheck="false">
     <testsuites>
-        <testsuite name="Francium Process Test Suite">
+        <testsuite name="Francium logSys Test Suite">
             <directory suffix=".php">./tests/</directory>
         </testsuite>
     </testsuites>
     <php>
-        <var name="DB_DSN" value="mysql:dbname=tests;host=localhost" />
+        <var name="DB_TYPE" value="sqlite" />
         <var name="DB_HOST" value="localhost" />
         <var name="DB_PORT" value="3306" />
         <var name="DB_USERNAME" value="root" />

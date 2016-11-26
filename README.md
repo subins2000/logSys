@@ -66,3 +66,16 @@ This version changes the algorithm used to hash passwords. If you're using an ol
 * (For upgrading from old versions) Remove all existing values in `password` column in your table
 * Remove `password_salt` column from your users' table and set the length of the `password` column to `255`.
 * Update "class.logsys.php" file
+
+Testing
+=======
+
+Run `phpunit`.
+
+## Config
+
+Edit `phpunit.xml` and change `DB_TYPE` value to either `mysql` or `sqlite` :
+
+```xml
+<var name="DB_TYPE" value="sqlite" />
+```
