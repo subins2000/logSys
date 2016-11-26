@@ -22,7 +22,7 @@ namespace Fr;
 /**
 .---------------------------------------------------------------------------.
 |  Software:      PHP Login System - PHP logSys                             |
-|  Version:       0.6.3 (Last Updated on 2016 July 30)                      |
+|  Version:       0.7 (Last Updated on 2016 November 26)                    |
 |  Documentation: http://subinsb.com/php-logsys                             |
 |  Contribute:    https://github.com/subins2000/logSys                      |
 '---------------------------------------------------------------------------'
