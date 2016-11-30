@@ -332,7 +332,7 @@ class LS {
   /**
    * Log something in the Francium.log file.
    * To enable logging, make a file called "Francium.log" in the directory
-   * where "class.logsys.php" file is situated
+   * where "LS.php" file is situated
    */
   public static function log($msg = ""){
     $log_file = __DIR__ . "/Francium.log";
