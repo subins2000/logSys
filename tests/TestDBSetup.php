@@ -12,7 +12,7 @@ class TestDBSetup extends PHPUnit_Framework_TestCase {
 
   public function testCreateTables(){
     if($GLOBALS['DB_TYPE'] === "sqlite"){
-      $sql = file_get_contents(__DIR__ . "/../src/sqlite.sql");
+      $sql = file_get_contents(__DIR__ . "/../sql/sqlite.sql");
       $this->pdo->exec($sql);
 
       $sth = $this->pdo->query("SELECT COUNT(1) FROM `sqlite_master` WHERE type='table' AND `name` LIKE 'users'");
@@ -24,7 +24,7 @@ class TestDBSetup extends PHPUnit_Framework_TestCase {
       $sth = $this->pdo->query("SELECT COUNT(1) FROM `sqlite_master` WHERE type='table' AND `name` LIKE 'resetTokens'");
       $this->assertEquals(1, $sth->fetchColumn());
     }else{
-      $sql = file_get_contents(__DIR__ . "/../src/mysql.sql");
+      $sql = file_get_contents(__DIR__ . "/../sql/mysql.sql");
       $this->pdo->exec($sql);
 
       $sth = $this->pdo->query("SHOW TABLES LIKE 'users'");

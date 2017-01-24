@@ -15,7 +15,7 @@ class TestUserBasic extends PHPUnit_Framework_TestCase {
         "port" => $GLOBALS['DB_PORT'],
         "username" => $GLOBALS['DB_USERNAME'],
         "password" => $GLOBALS['DB_PASSWORD'],
-        "name" => $GLOBALS['DB_DBNAME']
+        "name" => $GLOBALS['DB_NAME']
       ),
       "features" => array(
         "auto_init" => false,
