@@ -22,7 +22,7 @@ namespace Fr;
 /**
 .---------------------------------------------------------------------------.
 |  Software:      PHP Login System - PHP logSys                             |
-|  Version:       0.7 (Last Updated on 2016 November 26)                    |
+|  Version:       0.7.1 (Last Updated on 2017 January 24)                   |
 |  Documentation: http://subinsb.com/php-logsys                             |
 |  Contribute:    https://github.com/subins2000/logSys                      |
 '---------------------------------------------------------------------------'
@@ -77,7 +77,15 @@ class LS {
 
       "name" => "",
       "table" => "users",
-      "token_table" => "resetTokens"
+      "token_table" => "resetTokens",
+
+      "columns" => array(
+        "id" => "id",
+        "username" => "username",
+        "password" => "password",
+        "email" => "email",
+        "attempt" => "attempt"
+      ),
     ),
 
     /**
@@ -525,9 +533,9 @@ class LS {
        * get an array with key as the column name.
        */
       if(self::$config['features']['email_login'] === true){
-        $query = "SELECT `id`, `password`, `attempt` FROM `". self::$config['db']['table'] ."` WHERE `username`=:login OR `email`=:login ORDER BY `id` LIMIT 1";
+        $query = "SELECT `". self::$config["db"]["columns"]["id"] ."`, `". self::$config["db"]["columns"]["password"] ."`, `". self::$config["db"]["columns"]["attempt"] ."` FROM `". self::$config['db']['table'] ."` WHERE `". self::$config["db"]["columns"]["username"] ."`=:login OR `". self::$config["db"]["columns"]["email"] ."`=:login ORDER BY `". self::$config["db"]["columns"]["id"] ."` LIMIT 1";
       }else{
-        $query = "SELECT `id`, `password`, `attempt` FROM `". self::$config['db']['table'] ."` WHERE `username`=:login ORDER BY `id` LIMIT 1";
+        $query = "SELECT `". self::$config["db"]["columns"]["id"] ."`, `". self::$config["db"]["columns"]["password"] ."`, `". self::$config["db"]["columns"]["attempt"] ."` FROM `". self::$config['db']['table'] ."` WHERE `". self::$config["db"]["columns"]["username"] ."`=:login ORDER BY `". self::$config["db"]["columns"]["id"] ."` LIMIT 1";
       }
 
       $sql = self::$dbh->prepare($query);
@@ -660,13 +668,13 @@ class LS {
 
       if( count($other) == 0 ){
         /* If there is no other fields mentioned, make the default query */
-        $sql = self::$dbh->prepare("INSERT INTO `". self::$config['db']['table'] ."` (`username`, `password`) VALUES(:username, :password)");
+        $sql = self::$dbh->prepare("INSERT INTO `". self::$config['db']['table'] ."` (`". self::$config["db"]["columns"]["username"] ."`, `". self::$config["db"]["columns"]["password"] ."`) VALUES(:username, :password)");
       }else{
         /* if there are other fields to add value to, make the query and bind values according to it */
         $keys   = array_keys($other);
         $columns = implode(",", $keys);
         $colVals = implode(",:", $keys);
-        $sql   = self::$dbh->prepare("INSERT INTO `". self::$config['db']['table'] ."` (`username`, `password`, $columns) VALUES(:username, :password, :$colVals)");
+        $sql   = self::$dbh->prepare("INSERT INTO `". self::$config['db']['table'] ."` (`". self::$config["db"]["columns"]["username"] ."`, `". self::$config["db"]["columns"]["password"] ."`, $columns) VALUES(:username, :password, :$colVals)");
         foreach($other as $key => $value){
           $value = htmlspecialchars($value);
           $sql->bindValue(":$key", $value);
@@ -792,7 +800,7 @@ class LS {
           "identity_type" => $identName
         ));
       }else{
-        $sql = self::$dbh->prepare("SELECT `email`, `id` FROM `". self::$config['db']['table'] ."` WHERE `username`=:login OR `email`=:login");
+        $sql = self::$dbh->prepare("SELECT `". self::$config["db"]["columns"]["email"] ."`, `". self::$config["db"]["columns"]["id"] ."` FROM `". self::$config['db']['table'] ."` WHERE `". self::$config["db"]["columns"]["username"] ."`=:login OR `". self::$config["db"]["columns"]["email"] ."`=:login");
         $sql->bindValue(":login", $identification);
 
         $sql->execute();
@@ -838,7 +846,7 @@ class LS {
     self::construct();
     if(self::$loggedIn){
       $hashedPass = password_hash($newpass . self::$config['keys']['salt'], PASSWORD_DEFAULT);
-      $sql = self::$dbh->prepare("UPDATE `". self::$config['db']['table'] ."` SET `password` = ? WHERE `id` = ?");
+      $sql = self::$dbh->prepare("UPDATE `". self::$config['db']['table'] ."` SET `". self::$config["db"]["columns"]["password"] ."` = ? WHERE `". self::$config["db"]["columns"]["id"] ."` = ?");
       $sql->execute(array($hashedPass, self::$user));
       return true;
     }else{
@@ -854,9 +862,9 @@ class LS {
   public static function userExists($identification){
     self::construct();
     if(self::$config['features']['email_login'] === true){
-      $query = "SELECT COUNT(1) FROM `". self::$config['db']['table'] ."` WHERE `username`=:login OR `email`=:login";
+      $query = "SELECT COUNT(1) FROM `". self::$config['db']['table'] ."` WHERE `". self::$config["db"]["columns"]["username"] ."`=:login OR `". self::$config["db"]["columns"]["email"] ."`=:login";
     }else{
-      $query = "SELECT COUNT(1) FROM `". self::$config['db']['table'] ."` WHERE `username`=:login";
+      $query = "SELECT COUNT(1) FROM `". self::$config['db']['table'] ."` WHERE `". self::$config["db"]["columns"]["username"] ."`=:login";
     }
     $sql = self::$dbh->prepare($query);
     $sql->execute(array(
@@ -881,7 +889,7 @@ class LS {
       $columns = $what != "*" ? "`$what`" : "*";
     }
 
-    $sql = self::$dbh->prepare("SELECT {$columns} FROM `". self::$config['db']['table'] ."` WHERE `id` = ? ORDER BY `id` LIMIT 1");
+    $sql = self::$dbh->prepare("SELECT {$columns} FROM `". self::$config['db']['table'] ."` WHERE `". self::$config["db"]["columns"]["id"] ."` = ? ORDER BY `". self::$config["db"]["columns"]["id"] ."` LIMIT 1");
     $sql->execute(array($user));
 
     $data = $sql->fetch(\PDO::FETCH_ASSOC);
@@ -906,7 +914,7 @@ class LS {
       }
       $columns = substr($columns, 0, -2); // Remove last ","
 
-      $sql = self::$dbh->prepare("UPDATE `". self::$config['db']['table'] ."` SET {$columns} WHERE `id`=:id");
+      $sql = self::$dbh->prepare("UPDATE `". self::$config['db']['table'] ."` SET {$columns} WHERE `". self::$config["db"]["columns"]["id"] ."`=:id");
       $sql->bindValue(":id", $user);
       foreach($toUpdate as $key => $value){
         $value = htmlspecialchars($value);
