@@ -65,7 +65,7 @@ class LS {
        * MySQL options
        */
       "host" => "",
-      "port" => 3306,
+      "port" => "3306",
 
       /**
        * SQLite options
@@ -380,6 +380,12 @@ class LS {
            * Enable Multithreading Read/Write
            */
           self::$dbh->exec("PRAGMA journal_mode=WAL;");
+        }else if( self::$config["db"]["type"] === "postgresql" ){
+          self::$dbh = new \PDO("pgsql:dbname=". self::$config['db']['name'] .";host=". self::$config['db']['host'] .";port=". self::$config['db']['port']. ";charset=utf8", self::$config['db']['username'], self::$config['db']['password'],
+            array(
+              \PDO::ATTR_PERSISTENT => true,
+              \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
+          ));
         }else{
           self::$dbh = new \PDO("mysql:dbname=". self::$config['db']['name'] .";host=". self::$config['db']['host'] .";port=". self::$config['db']['port']. ";charset=utf8", self::$config['db']['username'], self::$config['db']['password'],
             array(
