@@ -242,6 +242,21 @@ class LS {
        * a page, then set the value to TRUE, else FALSE
        */
       'first_check_only' => true
+    ),
+
+    /**
+     * Debug info
+     */
+    "debug" => array(
+      /**
+       * Enable debugging
+       */
+      "enable" => false,
+
+      /**
+       * Absolute path
+       */
+      "log_file" => "",
     )
   );
 
@@ -324,7 +339,7 @@ class LS {
     };
 
     self::$config = array_replace_recursive(self::$default_config, self::$config);
-    if($direct == true){
+    if($direct === true){
       self::construct();
     }
   }
@@ -335,9 +350,13 @@ class LS {
    * where "LS.php" file is situated
    */
   public static function log($msg = ""){
-    $log_file = __DIR__ . "/Francium.log";
-    if(file_exists($log_file)){
-      if($msg != ""){
+    if( self::$config["debug"]["enable"] ){
+      $log_file = self::$config["debug"]["log_file"];
+
+      if($log_file === "")
+        $log_file = __DIR__ . "/Francium.log";
+
+      if( $msg !== "" ){
         $message = "[" . date("Y-m-d H:i:s") . "] $msg";
         $fh = fopen($log_file, 'a');
         fwrite($fh, $message . "\n");
