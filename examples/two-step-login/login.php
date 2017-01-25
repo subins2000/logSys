@@ -11,13 +11,13 @@ require "config.php";
       <p>This demo shows how logSys can be used to implement two step verification.</p>
       <?php
       $two_step_login_active = false;
-      if(\Fr\LS::twoStepLogin() === false && isset($_POST['action_login'])){
+      if($LS->twoStepLogin() === false && isset($_POST['action_login'])){
         $identification = $_POST['login'];
         $password = $_POST['password'];
         if($identification == "" || $password == ""){
           $msg = array("Error", "Username / Password Wrong !");
         }else{
-          $login = \Fr\LS::twoStepLogin($identification, $password, isset($_POST['remember_me']));
+          $login = $LS->twoStepLogin($identification, $password, isset($_POST['remember_me']));
           if($login === false){
             echo "<h2>Error</h2><p>Username / Password Wrong !</p>";
           }else if(is_array($login) && $login['status'] == "blocked"){

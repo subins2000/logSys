@@ -5,7 +5,7 @@
 ini_set("display_errors", "on");
 
 require __DIR__ . "/../../src/LS.php";
-\Fr\LS::config(array(
+$LS = new \Fr\LS(array(
   "db" => array(
     "host" => "localhost",
     "port" => 3306,

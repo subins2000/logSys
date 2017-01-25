@@ -17,10 +17,10 @@ require "config.php";
           
         if($new_password != $retype_password){
           echo "<p><h2>Passwords Doesn't match</h2><p>The passwords you entered didn't match. Try again.</p></p>";
-        }else if(\Fr\LS::login(\Fr\LS::getUser("username"), $curpass, false, false) == false){
+        }else if($LS->login($LS->getUser("username"), $curpass, false, false) == false){
           echo "<h2>Current Password Wrong!</h2><p>The password you entered for your account is wrong.</p>";
         }else{
-          $change_password = \Fr\LS::changePassword($new_password);
+          $change_password = $LS->changePassword($new_password);
           if($change_password === true){
             echo "<h2>Password Changed Successfully</h2>";
           }
@@ -30,7 +30,7 @@ require "config.php";
       }
     }
     ?>
-    <form action="<?php echo \Fr\LS::curPageURL();?>" method='POST'>
+    <form action="<?php echo $LS->curPageURL();?>" method='POST'>
       <label>
         <p>Current Password</p>
         <input type='password' name='current_password' />

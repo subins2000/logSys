@@ -1,7 +1,7 @@
 <?php
 require "config.php";
-if(isset($_GET['revoke_device']) && \Fr\LS::csrf()){
-  if(\Fr\LS::revokeDevice($_GET['revoke_device'])){
+if(isset($_GET['revoke_device']) && $LS->csrf()){
+  if($LS->revokeDevice($_GET['revoke_device'])){
     $revoked = true;
   }else{
     $revoked = false;
@@ -24,7 +24,7 @@ if(isset($_GET['revoke_device']) && \Fr\LS::csrf()){
           echo "<h2>Failed to Revoke Device</h2>";
         }
       }
-      $devices = \Fr\LS::getDevices();
+      $devices = $LS->getDevices();
       if(count($devices) == 0){
         echo "<p>No devices are authorized to use your account by skipping 2 Step Verification.</p>";
       }else{
@@ -39,7 +39,7 @@ if(isset($_GET['revoke_device']) && \Fr\LS::csrf()){
           echo "<tr>
             <td>{$device['token']}</td>
             <td>{$device['last_access']}</td>
-            <td><a href='?revoke_device={$device['token']}" . \Fr\LS::csrf("g") ."'>Revoke Access</a></td>
+            <td><a href='?revoke_device={$device['token']}" . $LS->csrf("g") ."'>Revoke Access</a></td>
           </tr>";
         }
         echo "</tbody></table>";

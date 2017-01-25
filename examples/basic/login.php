@@ -6,7 +6,7 @@ if(isset($_POST['action_login'])){
 	if($identification == "" || $password == ""){
 		$msg = array("Error", "Username / Password Wrong !");
 	}else{
-		$login = \Fr\LS::login($identification, $password, isset($_POST['remember_me']));
+		$login = $LS->login($identification, $password, isset($_POST['remember_me']));
 		if($login === false){
 			$msg = array("Error", "Username / Password Wrong !");
 		}else if(is_array($login) && $login['status'] == "blocked"){

@@ -2,7 +2,7 @@
 require "config.php";
 if( isset($_POST['newName']) ){
 	$_POST['newName'] = $_POST['newName'] == "" ? "Dude" : $_POST['newName'];
-	\Fr\LS::updateUser(array(
+	$LS->updateUser(array(
 		"name" => $_POST['newName']
 	));
 }
@@ -16,13 +16,13 @@ if( isset($_POST['newName']) ){
 			<a href="logout.php">Log Out</a>
 		</p>
 		<p>
-			You registered on this website <strong><?php echo \Fr\LS::joinedSince(); ?></strong> ago.
+			You registered on this website <strong><?php echo $LS->joinedSince(); ?></strong> ago.
 		</p>
 		<p>
 			Here is the full data, the database stores on this user :
 		</p>
 		<pre><?php
-			$details = \Fr\LS::getUser();
+			$details = $LS->getUser();
 			print_r($details);
 			?></pre>
 		<p>

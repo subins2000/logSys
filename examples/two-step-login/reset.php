@@ -3,7 +3,7 @@
  <body>
   <?php
   require "config.php";
-  \Fr\LS::forgotPassword();
+  $LS->forgotPassword();
   ?>
  </body>
 </html>
