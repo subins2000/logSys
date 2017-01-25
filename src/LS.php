@@ -73,7 +73,7 @@ class LS {
 
       "name" => "",
       "table" => "users",
-      "token_table" => "resetTokens",
+      "token_table" => "user_tokens",
 
       "columns" => array(
         "id" => "id",
@@ -834,7 +834,7 @@ class LS {
            * Make token and insert into the table
            */
           $token = self::rand_string(40);
-          $sql = $this->dbh->prepare("INSERT INTO `". $this->config['db']['token_table'] ."` (`token`, `uid`, `requested`) VALUES (?, ?, NOW())");
+          $sql = $this->dbh->prepare("INSERT INTO `". $this->config['db']['token_table'] ."` (`token`, `uid`, `requested`) VALUES (?, ?, UNIX_TIMESTAMP())");
           $sql->execute(array($token, $uid));
           $encodedToken = urlencode($token);
 
@@ -1102,7 +1102,8 @@ class LS {
           $sql = $this->dbh->prepare("INSERT INTO `". $this->config['db']['token_table'] ."` (`token`, `uid`, `requested`) VALUES (?, ?, NOW())");
           $sql->execute(array($token, $uid));
 
-          call_user_func_array($this->config['two_step_login']['send_callback'], array($this, $uid, $token));
+          $that = $this;
+          call_user_func_array($this->config['two_step_login']['send_callback'], array(&$that, $uid, $token));
 
           /**
            * Display the form
@@ -1162,8 +1163,9 @@ class LS {
    */
   public function getOutput($state, $extraInfo = array()){
     if(is_callable($this->config["basic"]["output_callback"])){
+      $that = $this;
       return call_user_func_array($this->config["basic"]["output_callback"], array(
-        $this,
+        &$that,
         $state,
         $extraInfo
       ));
@@ -1239,7 +1241,8 @@ class LS {
      * If there is a callback for email sending, use it else PHP's mail()
      */
     if(is_callable($this->config['basic']['email_callback'])){
-      call_user_func_array($this->config['basic']['email_callback'], array($this, $email, $subject, $body));
+      $that = $this;
+      call_user_func_array($this->config['basic']['email_callback'], array(&$that, $email, $subject, $body));
     }else{
       $headers = array();
       $headers[] = "MIME-Version: 1.0";
