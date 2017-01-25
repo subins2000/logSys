@@ -31,12 +31,8 @@ namespace Fr;
 class LS {
 
   /**
-   * ------------
-   * BEGIN CONFIG
-   * ------------
-   * Edit the configuraion
+   * @var array Default configuration
    */
-
   public static $default_config = array(
     /**
      * Basic Config of logSys
@@ -201,6 +197,20 @@ class LS {
       "expire" => "+30 days",
       "path" => "/",
       "domain" => "",
+
+      /**
+       * Names of cookies created
+       */
+      "names" => array(
+        "login_token" => "lg",
+        "remember_me" => "rm",
+        "device" => "dv",
+
+        /**
+         * This is used as $_SESSION key
+         */
+        "current_user" => "cu",
+      ),
     ),
 
     /**
@@ -268,29 +278,22 @@ class LS {
     )
   );
 
-  /* ------------
-   * END Config.
-   * ------------
-   * No more editing after this line.
+  /**
+   * @var array
    */
-
-  public static $config = array();
-  private static $constructed = false;
+  private $config = array();
 
   /**
-   * Merge user config and default config
-   * $direct is for knowing whether the function is called by self::construct()
+   * Config
+   * @param  array  $config [description]
+   * @return [type]         [description]
    */
-  public static function config($config = null, $direct = true){
-    if($config != null){
-      self::$config = $config;
-    }
-
+  public function config($config = array()){
     /**
      * Callback to display messages for different states
      * @var array
      */
-    self::$default_config["basic"]["output_callback"] = function($state, $extraInfo = array()){
+    self::$default_config["basic"]["output_callback"] = function(&$LS, $state, $extraInfo = array()){
       if($state === "invalidToken")
         return "<h3>Error : Wrong/Invalid Token</h3>";
       else if($state === "fieldsLeftBlank")
@@ -307,7 +310,7 @@ class LS {
         return "<h3>Error : Not Logged In</h3>";
       else if($state === "twoStepLoginVerifyForm")
         return "<form action='". self::curPageURL() ."' method='POST'>
-          <p>". self::$config['two_step_login']['instruction'] ."</p>
+          <p>". $LS->config['two_step_login']['instruction'] ."</p>
           <label>
             <p>Token Received</p>
             <input type='text' name='logSys_two_step_login-token' placeholder='Paste the token here... (case sensitive)' />
@@ -346,22 +349,25 @@ class LS {
           </form>";
     };
 
-    self::$config = array_replace_recursive(self::$default_config, self::$config);
-    if($direct === true){
-      self::construct();
-    }
+    $this->config = array_replace_recursive(self::$default_config, $config);
+
+    /**
+     * Add the login page to the array of pages that doesn't need logging in
+     */
+    array_push($this->config['pages']['no_login'], $this->config['pages']['login_page']);
   }
 
   /**
-   * Log something in the Francium.log file.
-   * To enable logging, make a file called "Francium.log" in the directory
-   * where "LS.php" file is situated
+   * Add messages to log file
+   *
+   * @param  string  $msg Message
+   * @return boolean      Whether message was written
    */
-  public static function log($msg = ""){
-    if( self::$config["debug"]["enable"] ){
-      $log_file = self::$config["debug"]["log_file"];
+  public function log($msg = ""){
+    if( $this->config["debug"]["enable"] ){
+      $log_file = $this->config["debug"]["log_file"];
 
-      if($log_file === "")
+      if( $log_file === "" )
         $log_file = __DIR__ . "/Francium.log";
 
       if( $msg !== "" ){
@@ -369,155 +375,172 @@ class LS {
         $fh = fopen($log_file, 'a');
         fwrite($fh, $message . "\n");
         fclose($fh);
+        return true;
       }
     }
+    return false;
   }
 
-  public static $loggedIn = false;
-  public static $db = true;
-  public static $user = false;
-  private static $init_called = false;
-  private static $cookie, $session, $remember_cookie, $dbh;
+  /**
+   * @var boolean Is user logged in
+   */
+  public $loggedIn = false;
 
-  public static function construct($called_from = ""){
-    if(self::$constructed === false){
-      self::config(null, false);
-      self::$constructed = true;
+  /**
+   * @var int|boolean User ID
+   */
+  public $userID = false;
 
-      if(self::$config['features']['start_session'] === true){
-        session_start();
-      }
-      /**
-      * Try connecting to Database Server
-      */
-      try{
+  /**
+   * @var \PDO Database handler
+   */
+  private $dbh;
+
+  /**
+   * Intialize
+   * @param array $config Configuration
+   */
+  public function __construct($config = array()){
+    $this->config( $config );
+
+    if( $this->config['features']['start_session'] === true ){
+      session_start();
+    }
+
+    /**
+    * Try connecting to Database Server
+    */
+    try{
+      if( $this->config["db"]["type"] === "sqlite" ) {
+
+        $this->dbh = new \PDO("sqlite:" . $this->config["db"]["sqlite_path"],
+          $this->config["db"]["username"],
+          $this->config["db"]["password"],
+          array(
+            \PDO::ATTR_PERSISTENT => true,
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
+          )
+        );
+
         /**
-        * Add the login page to the array of pages that doesn't need logging in
-        */
-        array_push(self::$config['pages']['no_login'], self::$config['pages']['login_page']);
+         * Enable Multithreading Read/Write
+         */
+        $this->dbh->exec("PRAGMA journal_mode=WAL;");
 
-        if(self::$config["db"]["type"] === "sqlite"){
-          self::$dbh = new \PDO("sqlite:" . self::$config["db"]["sqlite_path"], self::$config["db"]["username"], self::$config["db"]["password"],
-            array(
-              \PDO::ATTR_PERSISTENT => true,
-              \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
-          ));
+      } else if( $this->config["db"]["type"] === "postgresql" ) {
+
+        $this->dbh = new \PDO("pgsql:dbname=". $this->config['db']['name'] .";host=". $this->config['db']['host'] .";port=". $this->config['db']['port']. ";",
+          $this->config['db']['username'],
+          $this->config['db']['password'],
+          array(
+            \PDO::ATTR_PERSISTENT => true,
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
+          )
+        );
+
+      } else {
+
+        $this->dbh = new \PDO("mysql:dbname=". $this->config['db']['name'] .";host=". $this->config['db']['host'] .";port=". $this->config['db']['port']. ";charset=utf8",
+          $this->config['db']['username'],
+          $this->config['db']['password'],
+          array(
+            \PDO::ATTR_PERSISTENT => true,
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
+        ));
+
+      }
+
+      $cookieToken = isset($_COOKIE['lg']) ? $_COOKIE['lg'] : false;
+
+      /**
+       * @var int|boolean User ID is stored in session
+       */
+      $sessionUID = isset($_SESSION['cu']) ? $_SESSION['cu'] : false;
+
+      $rememberMe = isset($_COOKIE['rm']) ? $_COOKIE['rm'] : false;
+
+      if($cookieToken) {
+        $loginToken = hash("sha256", $this->config['keys']['cookie'] . $sessionUID . $this->config['keys']['cookie']);
+
+        $this->loggedIn = $cookieToken === $loginToken;
+      }
+
+      /**
+      * If there is a Remember Me Cookie and the user is not logged in,
+      * then log in the user with the ID in the remember cookie if it
+      * matches with the decrypted value in `logSyslogin` cookie
+      */
+      if( $this->config['features']['remember_me'] === true && $rememberMe && !$this->loggedIn ) {
+        $loginToken = hash("sha256", $this->config['keys']['cookie']. $rememberMe . $this->config['keys']['cookie']);
+
+        $this->loggedIn = $loginToken === $loginToken;
+
+        if($this->loggedIn === true){
+          $_SESSION[$this->config["cookies"]["names"]["current_user"]] = $rememberMe;
+          $sessionUID = $rememberMe;
+        }
+      }
+
+      $this->userID = $sessionUID;
+
+      /**
+       * Check if devices is authorized to use the account
+       */
+      if($this->config['features']['two_step_login'] === true && $this->loggedIn){
+        $login_page = self::curPage() === $this->config['pages']['login_page'];
+
+        if(!isset($_SESSION['device_check']) && !isset($_COOKIE[$this->config["cookies"]["names"]["device"]]) && $login_page === false){
+          /**
+           * The device cookie is not even set. So, logout
+           */
+          $this->logout();
+        }else if($this->config['two_step_login']['first_check_only'] === false || ($this->config['two_step_login']['first_check_only'] === true && !isset($_SESSION['device_check']))){
+          $sql = $this->dbh->prepare("SELECT '1' FROM `". $this->config['two_step_login']['devices_table'] ."` WHERE `uid` = ? AND `token` = ?");
+          $sql->execute(array($this->userID, $_COOKIE[$this->config["cookies"]["names"]["device"]]));
 
           /**
-           * Enable Multithreading Read/Write
+           * Device not authorized, so remove device cookie & logout
            */
-          self::$dbh->exec("PRAGMA journal_mode=WAL;");
-        }else if( self::$config["db"]["type"] === "postgresql" ){
-          self::$dbh = new \PDO("pgsql:dbname=". self::$config['db']['name'] .";host=". self::$config['db']['host'] .";port=". self::$config['db']['port']. ";charset=utf8", self::$config['db']['username'], self::$config['db']['password'],
-            array(
-              \PDO::ATTR_PERSISTENT => true,
-              \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
-          ));
-        }else{
-          self::$dbh = new \PDO("mysql:dbname=". self::$config['db']['name'] .";host=". self::$config['db']['host'] .";port=". self::$config['db']['port']. ";charset=utf8", self::$config['db']['username'], self::$config['db']['password'],
-            array(
-              \PDO::ATTR_PERSISTENT => true,
-              \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
-          ));
-        }
-
-        self::$db = true;
-
-        self::$cookie = isset($_COOKIE['logSyslogin']) ? $_COOKIE['logSyslogin'] : false;
-        self::$session = isset($_SESSION['logSyscuruser']) ? $_SESSION['logSyscuruser'] : false;
-        self::$remember_cookie = isset($_COOKIE['logSysrememberMe']) ? $_COOKIE['logSysrememberMe'] : false;
-
-        $encUserID = hash("sha256", self::$config['keys']['cookie'] . self::$session . self::$config['keys']['cookie']);
-
-        if(self::$cookie == $encUserID){
-          self::$loggedIn = true;
-        }else{
-          self::$loggedIn = false;
-        }
-
-        /**
-        * If there is a Remember Me Cookie and the user is not logged in,
-        * then log in the user with the ID in the remember cookie, if it
-        * matches with the decrypted value in `logSyslogin` cookie
-        */
-        if(self::$config['features']['remember_me'] === true && self::$remember_cookie !== false && self::$loggedIn === false){
-          $encUserID = hash("sha256", self::$config['keys']['cookie']. self::$remember_cookie . self::$config['keys']['cookie']);
-          if(self::$cookie == $encUserID){
-            self::$loggedIn = true;
+          if($sql->fetchColumn() !== '1' && $login_page === false){
+            setcookie($this->config["cookies"]["names"]["device"], "", time() - 10);
+            $this->logout();
           }else{
-            self::$loggedIn = false;
-          }
-
-          if(self::$loggedIn === true){
-            $_SESSION['logSyscuruser'] = self::$remember_cookie;
-            self::$session = self::$remember_cookie;
-          }
-        }
-
-        self::$user = self::$session;
-
-        /**
-         * Check if devices is authorized to use the account
-         */
-        if(self::$config['features']['two_step_login'] === true && self::$loggedIn){
-          $login_page = self::curPage() === self::$config['pages']['login_page'];
-
-          if(!isset($_SESSION['device_check']) && !isset($_COOKIE['logSysdevice']) && $login_page === false){
             /**
-             * The device cookie is not even set. So, logout
+             * This session has been checked and verified
              */
-            self::logout();
-            $called_from = "login";
-          }else if(self::$config['two_step_login']['first_check_only'] === false || (self::$config['two_step_login']['first_check_only'] === true && !isset($_SESSION['device_check']))){
-            $sql = self::$dbh->prepare("SELECT '1' FROM `". self::$config['two_step_login']['devices_table'] ."` WHERE `uid` = ? AND `token` = ?");
-            $sql->execute(array(self::$user, $_COOKIE['logSysdevice']));
-
-            /**
-             * Device not authorized, so remove device cookie & logout
-             */
-            if($sql->fetchColumn() !== '1' && $login_page === false){
-              setcookie("logSysdevice", "", time() - 10);
-              self::logout();
-              $called_from = "login";
-            }else{
-              /**
-               * This session has been checked and verified
-               */
-              $_SESSION['device_check'] = 1;
-            }
+            $_SESSION['device_check'] = 1;
           }
         }
-
-        if(self::$config['features']['auto_init'] === true && $called_from != "logout" && $called_from != "login"){
-          self::init();
-        }
-        return true;
-      }catch(\PDOException $e) {
-        /**
-         * Couldn't connect to Database
-         */
-        self::log('Couldn\'t connect to database. Check \Fr\LS::$config["db"] credentials');
-        return false;
       }
+
+      if( $this->config['features']['auto_init'] === true ){
+        $this->init();
+      }
+      return true;
+    }catch(\PDOException $e) {
+      /**
+       * Couldn't connect to Database
+       */
+      self::log("Could not connect to database. Check config->db credentials. PDO Output: " . $e->getMessage());
+      return false;
     }
   }
 
   /**
    * A function that will automatically redirect user according to his/her login status
    */
-  public static function init() {
-    self::construct();
-    if(in_array(self::curPage(), self::$config['pages']['everyone'])){
+  public function init() {
+    if(in_array(self::curPage(), $this->config['pages']['everyone'])){
       /**
        * No redirects as this page can be accessed
        * by anyone whether he/she is logged in or not
        */
-    }else if(self::$loggedIn === true && in_array(self::curPage(), self::$config['pages']['no_login'])){
-      self::redirect(self::$config['pages']['home_page']);
-    }else if(self::$loggedIn === false && array_search(self::curPage(), self::$config['pages']['no_login']) === false){
-      self::redirect(self::$config['pages']['login_page']);
+    }else if($this->loggedIn === true && in_array(self::curPage(), $this->config['pages']['no_login'])){
+      self::redirect($this->config['pages']['home_page']);
+    }else if($this->loggedIn === false && array_search(self::curPage(), $this->config['pages']['no_login']) === false){
+      self::redirect($this->config['pages']['login_page']);
     }
-    self::$init_called = true;
+    $this->init_called = true;
   }
 
   /**
@@ -525,132 +548,129 @@ class LS {
    * As of version 0.4, it is required to include the remember_me parameter
    * when calling this function to avail the "Remember Me" feature.
    */
-  public static function login($username, $password, $remember_me = false, $cookies = true){
-    self::construct("login");
-    if(self::$db === true){
+  public function login($username, $password, $remember_me = false, $cookies = true){
+    /**
+     * We Add LIMIT to 1 in SQL query because to
+     * get an array with key as the column name.
+     */
+    if($this->config['features']['email_login'] === true){
+      $query = "SELECT `". $this->config["db"]["columns"]["id"] ."`, `". $this->config["db"]["columns"]["password"] ."`, `". $this->config["db"]["columns"]["attempt"] ."` FROM `". $this->config['db']['table'] ."` WHERE `". $this->config["db"]["columns"]["username"] ."`=:login OR `". $this->config["db"]["columns"]["email"] ."`=:login ORDER BY `". $this->config["db"]["columns"]["id"] ."` LIMIT 1";
+    }else{
+      $query = "SELECT `". $this->config["db"]["columns"]["id"] ."`, `". $this->config["db"]["columns"]["password"] ."`, `". $this->config["db"]["columns"]["attempt"] ."` FROM `". $this->config['db']['table'] ."` WHERE `". $this->config["db"]["columns"]["username"] ."`=:login ORDER BY `". $this->config["db"]["columns"]["id"] ."` LIMIT 1";
+    }
+
+    $sql = $this->dbh->prepare($query);
+    $sql->bindValue(":login", $username);
+
+    $sql->execute();
+    $cols = $sql->fetch(\PDO::FETCH_ASSOC);
+
+    if(empty($cols)){
+      // No such user like that
+      return false;
+    }else{
       /**
-       * We Add LIMIT to 1 in SQL query because to
-       * get an array with key as the column name.
+       * Get the user details
        */
-      if(self::$config['features']['email_login'] === true){
-        $query = "SELECT `". self::$config["db"]["columns"]["id"] ."`, `". self::$config["db"]["columns"]["password"] ."`, `". self::$config["db"]["columns"]["attempt"] ."` FROM `". self::$config['db']['table'] ."` WHERE `". self::$config["db"]["columns"]["username"] ."`=:login OR `". self::$config["db"]["columns"]["email"] ."`=:login ORDER BY `". self::$config["db"]["columns"]["id"] ."` LIMIT 1";
-      }else{
-        $query = "SELECT `". self::$config["db"]["columns"]["id"] ."`, `". self::$config["db"]["columns"]["password"] ."`, `". self::$config["db"]["columns"]["attempt"] ."` FROM `". self::$config['db']['table'] ."` WHERE `". self::$config["db"]["columns"]["username"] ."`=:login ORDER BY `". self::$config["db"]["columns"]["id"] ."` LIMIT 1";
+      $us_id = $cols['id'];
+      $us_pass = $cols['password'];
+      $status = $cols['attempt'];
+
+      if(substr($status, 0, 2) == "b-"){
+        $blockedTime = substr($status, 2);
+        if(time() < $blockedTime){
+          $blocked = true;
+          return array(
+            "status"  => "blocked",
+            "minutes" => round(abs($blockedTime - time()) / 60, 0),
+            "seconds" => round(abs($blockedTime - time()) / 60*60, 2)
+          );
+        }else{
+          // remove the block, because the time limit is over
+          $this->updateUser(array(
+            "attempt" => "" // No tries at all
+          ), $us_id);
+        }
       }
+      /**
+       * Why login if password is empty ?
+       * --------------------------------
+       * If using OAuth, you have to login someone without knowing their password,
+       * this usage is helpful. But, it makes a serious security problem too.
+       * Hence, before calling \Fr\LS::login() in the login page, it is
+       * required to check whether the password fieldis left blank
+       */
+      if(!isset($blocked) && ($password === "" || password_verify($password . $this->config['keys']['salt'], $us_pass) )){
+        if($cookies === true){
 
-      $sql = self::$dbh->prepare($query);
-      $sql->bindValue(":login", $username);
+          $_SESSION[$this->config["cookies"]["names"]["current_user"]] = $us_id;
 
-      $sql->execute();
-      $cols = $sql->fetch(\PDO::FETCH_ASSOC);
+          setcookie($this->config["cookies"]["names"]["login_token"], hash("sha256", $this->config['keys']['cookie'] . $us_id . $this->config['keys']['cookie']), strtotime($this->config['cookies']['expire']), $this->config['cookies']['path'], $this->config['cookies']['domain']);
 
-      if(empty($cols)){
-        // No such user like that
-        return false;
+          if( $remember_me === true && $this->config['features']['remember_me'] === true ){
+            setcookie($this->config["cookies"]["names"]["remember_me"], $us_id, strtotime($this->config['cookies']['expire']), $this->config['cookies']['path'], $this->config['cookies']['domain']);
+          }
+          $this->loggedIn = true;
+
+          if($this->config['features']['block_brute_force'] === true){
+            /**
+             * If Brute Force Protection is Enabled,
+             * Reset the attempt status
+             */
+            $this->updateUser(array(
+              "attempt" => "0"
+            ), $us_id);
+          }
+
+          // Redirect
+          if($this->init_called){
+            self::redirect($this->config['pages']['home_page']);
+          }
+          return true;
+        }else{
+          /**
+           * If cookies shouldn't be set,
+           * it means login() was called
+           * to get the user's ID. So, return it
+           */
+          return $us_id;
+        }
       }else{
         /**
-         * Get the user details
+         * Incorrect password
+         * ------------------
+         * Check if brute force protection is enabled
          */
-        $us_id = $cols['id'];
-        $us_pass = $cols['password'];
-        $status = $cols['attempt'];
+        if($this->config['features']['block_brute_force'] === true){
+          $max_tries = $this->config['brute_force']['tries'];
 
-        if(substr($status, 0, 2) == "b-"){
-          $blockedTime = substr($status, 2);
-          if(time() < $blockedTime){
-            $blocked = true;
+          if($status == ""){
+            // User was not logged in before
+            $this->updateUser(array(
+              "attempt" => "1" // Tried 1 time
+            ), $us_id);
+          }else if($status == $max_tries){
+            /**
+             * Account Blocked. User will be only able to
+             * re-login at the time in UNIX timestamp
+             */
+            $eligible_for_next_login_time = strtotime("+". $this->config['brute_force']['time_limit'] ." seconds", time());
+            $this->updateUser(array(
+              "attempt" => "b-" . $eligible_for_next_login_time
+            ), $us_id);
             return array(
               "status"  => "blocked",
-              "minutes" => round(abs($blockedTime - time()) / 60, 0),
-              "seconds" => round(abs($blockedTime - time()) / 60*60, 2)
+              "minutes" => round(abs($eligible_for_next_login_time - time()) / 60, 0),
+              "seconds" => round(abs($eligible_for_next_login_time - time()) / 60*60, 2)
             );
-          }else{
-            // remove the block, because the time limit is over
-            self::updateUser(array(
-              "attempt" => "" // No tries at all
+          }else if($status < $max_tries){
+            // If the attempts are less than Max and not Max
+            $this->updateUser(array(
+              "attempt" => $status + 1 // Increase the no of tries by +1.
             ), $us_id);
           }
         }
-        /**
-         * Why login if password is empty ?
-         * --------------------------------
-         * If using OAuth, you have to login someone without knowing their password,
-         * this usage is helpful. But, it makes a serious security problem too.
-         * Hence, before calling \Fr\LS::login() in the login page, it is
-         * required to check whether the password fieldis left blank
-         */
-        if(!isset($blocked) && ($password === "" || password_verify($password . self::$config['keys']['salt'], $us_pass) )){
-          if($cookies === true){
-
-            $_SESSION['logSyscuruser'] = $us_id;
-
-            setcookie("logSyslogin", hash("sha256", self::$config['keys']['cookie'] . $us_id . self::$config['keys']['cookie']), strtotime(self::$config['cookies']['expire']), self::$config['cookies']['path'], self::$config['cookies']['domain']);
-
-            if( $remember_me === true && self::$config['features']['remember_me'] === true ){
-              setcookie("logSysrememberMe", $us_id, strtotime(self::$config['cookies']['expire']), self::$config['cookies']['path'], self::$config['cookies']['domain']);
-            }
-            self::$loggedIn = true;
-
-            if(self::$config['features']['block_brute_force'] === true){
-              /**
-               * If Brute Force Protection is Enabled,
-               * Reset the attempt status
-               */
-              self::updateUser(array(
-                "attempt" => "0"
-              ), $us_id);
-            }
-
-            // Redirect
-            if(self::$init_called){
-              self::redirect(self::$config['pages']['home_page']);
-            }
-            return true;
-          }else{
-            /**
-             * If cookies shouldn't be set,
-             * it means login() was called
-             * to get the user's ID. So, return it
-             */
-            return $us_id;
-          }
-        }else{
-          /**
-           * Incorrect password
-           * ------------------
-           * Check if brute force protection is enabled
-           */
-          if(self::$config['features']['block_brute_force'] === true){
-            $max_tries = self::$config['brute_force']['tries'];
-
-            if($status == ""){
-              // User was not logged in before
-              self::updateUser(array(
-                "attempt" => "1" // Tried 1 time
-              ), $us_id);
-            }else if($status == $max_tries){
-              /**
-               * Account Blocked. User will be only able to
-               * re-login at the time in UNIX timestamp
-               */
-              $eligible_for_next_login_time = strtotime("+". self::$config['brute_force']['time_limit'] ." seconds", time());
-              self::updateUser(array(
-                "attempt" => "b-" . $eligible_for_next_login_time
-              ), $us_id);
-              return array(
-                "status"  => "blocked",
-                "minutes" => round(abs($eligible_for_next_login_time - time()) / 60, 0),
-                "seconds" => round(abs($eligible_for_next_login_time - time()) / 60*60, 2)
-              );
-            }else if($status < $max_tries){
-              // If the attempts are less than Max and not Max
-              self::updateUser(array(
-                "attempt" => $status + 1 // Increase the no of tries by +1.
-              ), $us_id);
-            }
-          }
-          return false;
-        }
+        return false;
       }
     }
   }
@@ -659,22 +679,21 @@ class LS {
    * A function to register a user with passing the username, password
    * and optionally any other additional fields.
    */
-  public static function register( $id, $password, $other = array() ){
-    self::construct();
-    if( self::userExists($id) || (isset($other['email']) && self::userExists($other['email'])) ){
+  public function register( $id, $password, $other = array() ){
+    if( $this->userExists($id) || (isset($other['email']) && $this->userExists($other['email'])) ){
       return "exists";
     }else{
-      $hashedPass = password_hash($password. self::$config['keys']['salt'], PASSWORD_DEFAULT);
+      $hashedPass = password_hash($password. $this->config['keys']['salt'], PASSWORD_DEFAULT);
 
       if( count($other) == 0 ){
         /* If there is no other fields mentioned, make the default query */
-        $sql = self::$dbh->prepare("INSERT INTO `". self::$config['db']['table'] ."` (`". self::$config["db"]["columns"]["username"] ."`, `". self::$config["db"]["columns"]["password"] ."`) VALUES(:username, :password)");
+        $sql = $this->dbh->prepare("INSERT INTO `". $this->config['db']['table'] ."` (`". $this->config["db"]["columns"]["username"] ."`, `". $this->config["db"]["columns"]["password"] ."`) VALUES(:username, :password)");
       }else{
         /* if there are other fields to add value to, make the query and bind values according to it */
         $keys   = array_keys($other);
         $columns = implode(",", $keys);
         $colVals = implode(",:", $keys);
-        $sql   = self::$dbh->prepare("INSERT INTO `". self::$config['db']['table'] ."` (`". self::$config["db"]["columns"]["username"] ."`, `". self::$config["db"]["columns"]["password"] ."`, $columns) VALUES(:username, :password, :$colVals)");
+        $sql   = $this->dbh->prepare("INSERT INTO `". $this->config['db']['table'] ."` (`". $this->config["db"]["columns"]["username"] ."`, `". $this->config["db"]["columns"]["password"] ."`, $columns) VALUES(:username, :password, :$colVals)");
         foreach($other as $key => $value){
           $value = htmlspecialchars($value);
           $sql->bindValue(":$key", $value);
@@ -691,17 +710,16 @@ class LS {
   /**
    * Logout the current logged in user by deleting the cookies and destroying session
    */
-  public static function logout(){
-    self::construct("logout");
+  public function logout(){
     session_destroy();
-    setcookie("logSyslogin", "", time() - 10, self::$config['cookies']['path'], self::$config['cookies']['domain']);
-    setcookie("logSysrememberMe", "", time() - 10, self::$config['cookies']['path'], self::$config['cookies']['domain']);
+    setcookie($this->config["cookies"]["names"]["login_token"], "", time() - 10, $this->config['cookies']['path'], $this->config['cookies']['domain']);
+    setcookie($this->config["cookies"]["names"]["remember_me"], "", time() - 10, $this->config['cookies']['path'], $this->config['cookies']['domain']);
 
     /**
      * Wait for the cookies to be removed, then redirect
      */
     usleep(2000);
-    self::redirect(self::$config['pages']['login_page']);
+    self::redirect($this->config['pages']['login_page']);
     return true;
   }
 
@@ -710,13 +728,12 @@ class LS {
    * Note: Forgot Password = Reset Password.
    * logSys considers the both as same
    */
-  public static function forgotPassword(){
-    self::construct();
+  public function forgotPassword(){
     $curStatus = "initial";  // The Current Status of Forgot Password process
-    $identName = self::$config['features']['email_login'] === false ? "Username" : "Username / E-Mail";
+    $identName = $this->config['features']['email_login'] === false ? "Username" : "Username / E-Mail";
 
     if( !isset($_POST['logSysForgotPass']) && !isset($_GET['resetPassToken']) && !isset($_POST['logSysForgotPassChange']) ){
-      echo self::getOutput("resetPasswordRequestForm", array(
+      echo $this->getOutput("resetPasswordRequestForm", array(
         "identity_type" => $identName
       ));
 
@@ -729,17 +746,17 @@ class LS {
        * The user gave the password reset token. Check if the token is valid.
        */
       $reset_pass_token = urldecode($_GET['resetPassToken']);
-      $sql = self::$dbh->prepare("SELECT COUNT(1) FROM `". self::$config['db']['token_table'] ."` WHERE `token` = ?");
+      $sql = $this->dbh->prepare("SELECT COUNT(1) FROM `". $this->config['db']['token_table'] ."` WHERE `token` = ?");
       $sql->execute(array($reset_pass_token));
 
       if($sql->fetchColumn() == 0 || $reset_pass_token == ""){
         $curStatus = "invalidToken"; // The token user gave was not valid
-        echo self::getOutput($curStatus);
+        echo $this->getOutput($curStatus);
       }else{
         /**
          * The token is valid, display the new password form
          */
-        echo self::getOutput("resetPasswordForm", array(
+        echo $this->getOutput("resetPasswordForm", array(
           "resetPassToken" => $reset_pass_token
         ));
 
@@ -750,42 +767,42 @@ class LS {
       }
     }elseif(isset($_POST['logSysForgotPassChange']) && isset($_POST['logSysForgotPassNewPassword']) && isset($_POST['logSysForgotPassRetypedPassword'])){
       $reset_pass_token = urldecode($_POST['token']);
-      $sql = self::$dbh->prepare("SELECT `uid` FROM `". self::$config['db']['token_table'] ."` WHERE `token` = ?");
+      $sql = $this->dbh->prepare("SELECT `uid` FROM `". $this->config['db']['token_table'] ."` WHERE `token` = ?");
       $sql->execute(array($reset_pass_token));
 
-      $user = $sql->fetchColumn();
+      $userID = $sql->fetchColumn();
 
-      if( $user == null || $reset_pass_token == null ){
+      if( $userID == null || $reset_pass_token == null ){
         $curStatus = "invalidToken"; // The token user gave was not valid
-        echo self::getOutput($curStatus);
+        echo $this->getOutput($curStatus);
       }else{
         if($_POST['logSysForgotPassNewPassword'] == "" || $_POST['logSysForgotPassRetypedPassword'] == ""){
           $curStatus = "fieldsLeftBlank";
-          echo self::getOutput($curStatus);
+          echo $this->getOutput($curStatus);
         }elseif( $_POST['logSysForgotPassNewPassword'] != $_POST['logSysForgotPassRetypedPassword'] ){
           $curStatus = "passwordDontMatch"; // The new password and retype password submitted didn't match
-          echo self::getOutput($curStatus);
+          echo $this->getOutput($curStatus);
         }else{
           /**
            * We must create a fake assumption that the user is logged in to
            * change the password as \Fr\LS::changePassword()
            * requires the user to be logged in.
            */
-          self::$user = $user;
-          self::$loggedIn = true;
+          $this->userID = $userID;
+          $this->loggedIn = true;
 
-          if(self::changePassword($_POST['logSysForgotPassNewPassword'])){
-            self::$user = false;
-            self::$loggedIn = false;
+          if($this->changePassword($_POST['logSysForgotPassNewPassword'])){
+            $this->userID = false;
+            $this->loggedIn = false;
 
             /**
              * The token shall not be used again, so remove it.
              */
-            $sql = self::$dbh->prepare("DELETE FROM `". self::$config['db']['token_table'] ."` WHERE `token` = ?");
+            $sql = $this->dbh->prepare("DELETE FROM `". $this->config['db']['token_table'] ."` WHERE `token` = ?");
             $sql->execute(array($reset_pass_token));
 
             $curStatus = "passwordChanged"; // The password was successfully changed
-            echo self::getOutput($curStatus);
+            echo $this->getOutput($curStatus);
           }
         }
       }
@@ -796,11 +813,11 @@ class LS {
       $identification = $_POST['identification'];
       if($identification == ""){
         $curStatus = "identityNotProvided"; // The identity was not given
-        echo self::getOutput($curStatus, array(
+        echo $this->getOutput($curStatus, array(
           "identity_type" => $identName
         ));
       }else{
-        $sql = self::$dbh->prepare("SELECT `". self::$config["db"]["columns"]["email"] ."`, `". self::$config["db"]["columns"]["id"] ."` FROM `". self::$config['db']['table'] ."` WHERE `". self::$config["db"]["columns"]["username"] ."`=:login OR `". self::$config["db"]["columns"]["email"] ."`=:login");
+        $sql = $this->dbh->prepare("SELECT `". $this->config["db"]["columns"]["email"] ."`, `". $this->config["db"]["columns"]["id"] ."` FROM `". $this->config['db']['table'] ."` WHERE `". $this->config["db"]["columns"]["username"] ."`=:login OR `". $this->config["db"]["columns"]["email"] ."`=:login");
         $sql->bindValue(":login", $identification);
 
         $sql->execute();
@@ -808,7 +825,7 @@ class LS {
 
         if(empty($cols)){
           $curStatus = "userNotFound"; // The user with the identity given was not found in the users database
-          echo self::getOutput($curStatus);
+          echo $this->getOutput($curStatus);
         }else{
           $email = $cols['email'];
           $uid   = $cols['id'];
@@ -817,7 +834,7 @@ class LS {
            * Make token and insert into the table
            */
           $token = self::rand_string(40);
-          $sql = self::$dbh->prepare("INSERT INTO `". self::$config['db']['token_table'] ."` (`token`, `uid`, `requested`) VALUES (?, ?, NOW())");
+          $sql = $this->dbh->prepare("INSERT INTO `". $this->config['db']['token_table'] ."` (`token`, `uid`, `requested`) VALUES (?, ?, NOW())");
           $sql->execute(array($token, $uid));
           $encodedToken = urlencode($token);
 
@@ -825,11 +842,11 @@ class LS {
            * Prepare the email to be sent
            */
           $subject = "Reset Password";
-          $body   = "You requested for resetting your password on ". self::$config['basic']['company'] .". For this, please click the following link :
+          $body   = "You requested for resetting your password on ". $this->config['basic']['company'] .". For this, please click the following link :
           <blockquote>
             <a href='". self::curPageURL() ."?resetPassToken={$encodedToken}'>Reset Password : {$token}</a>
           </blockquote>";
-          self::sendMail($email, $subject, $body);
+          $this->sendMail($email, $subject, $body);
 
           echo "<p>An email has been sent to your email inbox with instructions. Check Your Mail Inbox and SPAM Folders.</p><p>You can close this window.</p>";
           $curStatus = "emailSent"; // E-Mail has been sent
@@ -842,15 +859,14 @@ class LS {
   /**
    * A function that handles the logged in user to change her/his password
    */
-  public static function changePassword($newpass){
-    self::construct();
-    if(self::$loggedIn){
-      $hashedPass = password_hash($newpass . self::$config['keys']['salt'], PASSWORD_DEFAULT);
-      $sql = self::$dbh->prepare("UPDATE `". self::$config['db']['table'] ."` SET `". self::$config["db"]["columns"]["password"] ."` = ? WHERE `". self::$config["db"]["columns"]["id"] ."` = ?");
-      $sql->execute(array($hashedPass, self::$user));
+  public function changePassword($newpass){
+    if($this->loggedIn){
+      $hashedPass = password_hash($newpass . $this->config['keys']['salt'], PASSWORD_DEFAULT);
+      $sql = $this->dbh->prepare("UPDATE `". $this->config['db']['table'] ."` SET `". $this->config["db"]["columns"]["password"] ."` = ? WHERE `". $this->config["db"]["columns"]["id"] ."` = ?");
+      $sql->execute(array($hashedPass, $this->userID));
       return true;
     }else{
-      echo self::getOutput("notLoggedIn");
+      echo $this->getOutput("notLoggedIn");
       return "notLoggedIn";
     }
   }
@@ -859,14 +875,13 @@ class LS {
    * Check if user exists with ther username/email given
    * $identification - Either email/username
    */
-  public static function userExists($identification){
-    self::construct();
-    if(self::$config['features']['email_login'] === true){
-      $query = "SELECT COUNT(1) FROM `". self::$config['db']['table'] ."` WHERE `". self::$config["db"]["columns"]["username"] ."`=:login OR `". self::$config["db"]["columns"]["email"] ."`=:login";
+  public function userExists($identification){
+    if($this->config['features']['email_login'] === true){
+      $query = "SELECT COUNT(1) FROM `". $this->config['db']['table'] ."` WHERE `". $this->config["db"]["columns"]["username"] ."`=:login OR `". $this->config["db"]["columns"]["email"] ."`=:login";
     }else{
-      $query = "SELECT COUNT(1) FROM `". self::$config['db']['table'] ."` WHERE `". self::$config["db"]["columns"]["username"] ."`=:login";
+      $query = "SELECT COUNT(1) FROM `". $this->config['db']['table'] ."` WHERE `". $this->config["db"]["columns"]["username"] ."`=:login";
     }
-    $sql = self::$dbh->prepare($query);
+    $sql = $this->dbh->prepare($query);
     $sql->execute(array(
       ":login" => $identification
     ));
@@ -877,11 +892,11 @@ class LS {
    * Fetches data of user in database. Returns a single value or an
    * array of value according to parameteres given to the function
    */
-  public static function getUser($what = "*", $user = null){
-    self::construct();
-    if($user == null){
-      $user = self::$user;
+  public function getUser($what = "*", $user = null){
+    if($user === null){
+      $user = $this->userID;
     }
+
     if( is_array($what) ){
       $columns = implode("`,`", $what);
       $columns  = "`{$columns}`";
@@ -889,7 +904,7 @@ class LS {
       $columns = $what != "*" ? "`$what`" : "*";
     }
 
-    $sql = self::$dbh->prepare("SELECT {$columns} FROM `". self::$config['db']['table'] ."` WHERE `". self::$config["db"]["columns"]["id"] ."` = ? ORDER BY `". self::$config["db"]["columns"]["id"] ."` LIMIT 1");
+    $sql = $this->dbh->prepare("SELECT {$columns} FROM `". $this->config['db']['table'] ."` WHERE `". $this->config["db"]["columns"]["id"] ."` = ? ORDER BY `". $this->config["db"]["columns"]["id"] ."` LIMIT 1");
     $sql->execute(array($user));
 
     $data = $sql->fetch(\PDO::FETCH_ASSOC);
@@ -902,19 +917,20 @@ class LS {
   /**
    * Updates the info of user in DB
    */
-  public static function updateUser($toUpdate = array(), $user = null){
-    self::construct();
+  public function updateUser($toUpdate = array(), $user = null){
     if( is_array($toUpdate) && !isset($toUpdate['id']) ){
-      if($user == null){
-        $user = self::$user;
+      
+      if($user === null){
+        $user = $this->userID;
       }
+
       $columns = "";
       foreach($toUpdate as $k => $v){
         $columns .= "`$k` = :$k, ";
       }
       $columns = substr($columns, 0, -2); // Remove last ","
 
-      $sql = self::$dbh->prepare("UPDATE `". self::$config['db']['table'] ."` SET {$columns} WHERE `". self::$config["db"]["columns"]["id"] ."`=:id");
+      $sql = $this->dbh->prepare("UPDATE `". $this->config['db']['table'] ."` SET {$columns} WHERE `". $this->config["db"]["columns"]["id"] ."`=:id");
       $sql->bindValue(":id", $user);
       foreach($toUpdate as $key => $value){
         $value = htmlspecialchars($value);
@@ -930,12 +946,12 @@ class LS {
   /**
    * Returns a string which shows the time since the user has joined
    */
-  public static function joinedSince($user = null){
-    self::construct();
-    if($user == null){
-      $user = self::$user;
+  public function joinedSince($user = null){
+    if($user === null){
+      $user = $this->userID;
     }
-    $created = self::getUser("created");
+
+    $created = $this->getUser("created");
     $timeFirst  = strtotime($created);
     $timeSecond = strtotime("now");
     $memsince   = $timeSecond - strtotime($created);
@@ -974,17 +990,17 @@ class LS {
   /**
    * 2 Step Verification Login Process
    * ---------------------------------
-   * When user logs in, it checks whether there is a cookie named "logSysdevice" and if there is :
-   *    1. Checks `config` -> `two_step_login` -> `devices_table` table in DB whethere there is a token with value as that of $_COOKIES['logSysdevice']
+   * When user logs in, it checks whether there is a cookie named $this->config["cookies"]["names"]["device"] and if there is :
+   *    1. Checks `config` -> `two_step_login` -> `devices_table` table in DB whethere there is a token with value as that of $_COOKIES[$this->config["cookies"]["names"]["device"]]
    *    2. If there is a row in table, then the "Enter Received Token" form is not shown and is directly logged in if username & pass is correct
    * If there is not a cookie, then :
    *    1. The "Enter Received token" form is shown
-   *    2. If the token entered is correct, then a unique string is set as $_COOKIE['logSysdevice'] value and inserted to `config` -> `two_step_login` -> `devices_table` table in DB
-   *    3. The $_COOKIE['logSysdevice'] is set to be stored for 4 months
+   *    2. If the token entered is correct, then a unique string is set as $_COOKIE[$this->config["cookies"]["names"]["device"]] value and inserted to `config` -> `two_step_login` -> `devices_table` table in DB
+   *    3. The $_COOKIE[$this->config["cookies"]["names"]["device"]] is set to be stored for 4 months
    * ---------------------
    * ^ In the above instructions, the token sending to E-Mail/SMS is not mentioned. Assume that it is done
    */
-  public static function twoStepLogin($identification = "", $password = "", $remember_me = false){
+  public function twoStepLogin($identification = "", $password = "", $remember_me = false){
     if(isset($_POST['logSys_two_step_login-token']) && isset($_POST['logSys_two_step_login-uid']) && $_SESSION['logSys_two_step_login-first_step'] === '1'){
       /**
        * The user's ID and token is got through the form
@@ -993,7 +1009,7 @@ class LS {
       $uid = $_POST['logSys_two_step_login-uid'];
       $token = $_POST['logSys_two_step_login-token'];
 
-      $sql = self::$dbh->prepare("SELECT COUNT(1) FROM `". self::$config['db']['token_table'] ."` WHERE `token` = ? AND `uid` = ?");
+      $sql = $this->dbh->prepare("SELECT COUNT(1) FROM `". $this->config['db']['token_table'] ."` WHERE `token` = ? AND `uid` = ?");
       $sql->execute(array($token, $uid));
 
       if($sql->fetchColumn() == 0){
@@ -1003,7 +1019,7 @@ class LS {
          * so that the user would have to login again
          */
         $_SESSION['logSys_two_step_login-first_step'] = '0';
-        echo self::getOutput("invalidToken");
+        echo $this->getOutput("invalidToken");
         return "invalidToken";
       }else{
         /**
@@ -1013,9 +1029,9 @@ class LS {
          */
         if(isset($_POST['logSys_two_step_login-dontask'])){
           $device_token = self::rand_string(10);
-          $sql = self::$dbh->prepare("INSERT INTO `". self::$config['two_step_login']['devices_table'] ."` (`uid`, `token`, `last_access`) VALUES (?, ?, NOW())");
+          $sql = $this->dbh->prepare("INSERT INTO `". $this->config['two_step_login']['devices_table'] ."` (`uid`, `token`, `last_access`) VALUES (?, ?, NOW())");
           $sql->execute(array($uid, $device_token));
-          setcookie("logSysdevice", $device_token, strtotime(self::$config['two_step_login']['expire']), self::$config['cookies']['path'], self::$config['cookies']['domain']);
+          setcookie($this->config["cookies"]["names"]["device"], $device_token, strtotime($this->config['two_step_login']['expire']), $this->config['cookies']['path'], $this->config['cookies']['domain']);
         }else{
           /**
            * Verify login for this session
@@ -1026,13 +1042,13 @@ class LS {
         /**
          * Revoke token from reusing
          */
-        $sql = self::$dbh->prepare("DELETE FROM `". self::$config['db']['token_table'] ."` WHERE `token` = ? AND `uid` = ?");
+        $sql = $this->dbh->prepare("DELETE FROM `". $this->config['db']['token_table'] ."` WHERE `token` = ? AND `uid` = ?");
         $sql->execute(array($token, $uid));
-        self::login(self::getUser("username", $uid), "", isset($_POST['logSys_two_step_login-remember_me']));
+        $this->login($this->getUser("username", $uid), "", isset($_POST['logSys_two_step_login-remember_me']));
       }
       return true;
     }else if($identification != "" && $password != ""){
-      $login = self::login($identification, $password, $remember_me, false);
+      $login = $this->login($identification, $password, $remember_me, false);
       if($login === false){
         /**
          * Username/Password wrong
@@ -1049,18 +1065,18 @@ class LS {
         /**
          * Check if device is verfied so that 2 Step Verification can be skipped
          */
-        if(isset($_COOKIE['logSysdevice'])){
-          $sql = self::$dbh->prepare("SELECT 1 FROM `". self::$config['two_step_login']['devices_table'] ."` WHERE `uid` = ? AND `token` = ?");
-          $sql->execute(array($uid, $_COOKIE['logSysdevice']));
+        if(isset($_COOKIE[$this->config["cookies"]["names"]["device"]])){
+          $sql = $this->dbh->prepare("SELECT 1 FROM `". $this->config['two_step_login']['devices_table'] ."` WHERE `uid` = ? AND `token` = ?");
+          $sql->execute(array($uid, $_COOKIE[$this->config["cookies"]["names"]["device"]]));
           if($sql->fetchColumn() == "1"){
             $verfied = true;
             /**
              * Update last accessed time
              */
-            $sql = self::$dbh->prepare("UPDATE `". self::$config['two_step_login']['devices_table'] ."` SET `last_access` = NOW() WHERE `uid` = ? AND `token` = ?");
-            $sql->execute(array($uid, $_COOKIE['logSysdevice']));
+            $sql = $this->dbh->prepare("UPDATE `". $this->config['two_step_login']['devices_table'] ."` SET `last_access` = NOW() WHERE `uid` = ? AND `token` = ?");
+            $sql->execute(array($uid, $_COOKIE[$this->config["cookies"]["names"]["device"]]));
 
-            self::login(self::getUser("username", $uid), "", $remember_me);
+            $this->login($this->getUser("username", $uid), "", $remember_me);
             return true;
           }
         }
@@ -1069,7 +1085,7 @@ class LS {
          * Do only if callback is present and if
          * the device is not verified
          */
-        if(is_callable(self::$config['two_step_login']['send_callback']) && !isset($verified)){
+        if(is_callable($this->config['two_step_login']['send_callback']) && !isset($verified)){
           /**
            * The first part of 2 Step Login is completed
            */
@@ -1078,20 +1094,20 @@ class LS {
           /**
            * The 2nd parameter depends on `config` -> `two_step_login` -> `numeric`
            */
-          $token = self::rand_string(self::$config['two_step_login']['token_length'], self::$config['two_step_login']['numeric']);
+          $token = self::rand_string($this->config['two_step_login']['token_length'], $this->config['two_step_login']['numeric']);
 
           /**
            * Save the token in DB
            */
-          $sql = self::$dbh->prepare("INSERT INTO `". self::$config['db']['token_table'] ."` (`token`, `uid`, `requested`) VALUES (?, ?, NOW())");
+          $sql = $this->dbh->prepare("INSERT INTO `". $this->config['db']['token_table'] ."` (`token`, `uid`, `requested`) VALUES (?, ?, NOW())");
           $sql->execute(array($token, $uid));
 
-          call_user_func_array(self::$config['two_step_login']['send_callback'], array($uid, $token));
+          call_user_func_array($this->config['two_step_login']['send_callback'], array($this, $uid, $token));
 
           /**
            * Display the form
            */
-          echo self::getOutput("twoStepLoginVerifyForm", array(
+          echo $this->getOutput("twoStepLoginVerifyForm", array(
             "remember_me" => $remember_me,
             "uid" => $uid
           ));
@@ -1114,10 +1130,10 @@ class LS {
    * Returns array of devices that are authorized
    * to login by user's account credentials
    */
-  public static function getDevices(){
-    if(self::$loggedIn){
-      $sql = self::$dbh->prepare("SELECT * FROM `". self::$config['two_step_login']['devices_table'] ."` WHERE `uid` = ?");
-      $sql->execute(array(self::$user));
+  public function getDevices(){
+    if($this->loggedIn){
+      $sql = $this->dbh->prepare("SELECT * FROM `". $this->config['two_step_login']['devices_table'] ."` WHERE `uid` = ?");
+      $sql->execute(array($this->userID));
       return $sql->fetchAll(\PDO::FETCH_ASSOC);
     }else{
       return false;
@@ -1127,10 +1143,10 @@ class LS {
   /**
    * Revoke a device
    */
-  public static function revokeDevice($device_token){
-    if(self::$loggedIn){
-      $sql = self::$dbh->prepare("DELETE FROM `". self::$config['two_step_login']['devices_table'] ."` WHERE `uid` = ? AND `token` = ?");
-      $sql->execute(array(self::$user, $device_token));
+  public function revokeDevice($device_token){
+    if($this->loggedIn){
+      $sql = $this->dbh->prepare("DELETE FROM `". $this->config['two_step_login']['devices_table'] ."` WHERE `uid` = ? AND `token` = ?");
+      $sql->execute(array($this->userID, $device_token));
       if(isset($_SESSION['device_check'])){
         unset($_SESSION['device_check']);
       }
@@ -1144,9 +1160,10 @@ class LS {
    * @param  array  $extraInfo Extra parameters about the state
    * @return string            HTML output
    */
-  public static function getOutput($state, $extraInfo = array()){
-    if(is_callable(self::$config["basic"]["output_callback"])){
-      return call_user_func_array(self::$config["basic"]["output_callback"], array(
+  public function getOutput($state, $extraInfo = array()){
+    if(is_callable($this->config["basic"]["output_callback"])){
+      return call_user_func_array($this->config["basic"]["output_callback"], array(
+        $this,
         $state,
         $extraInfo
       ));
@@ -1217,18 +1234,18 @@ class LS {
   /**
    * Any mails need to be sent by logSys goes to here
    */
-  public static function sendMail($email, $subject, $body){
+  public function sendMail($email, $subject, $body){
     /**
      * If there is a callback for email sending, use it else PHP's mail()
      */
-    if(is_callable(self::$config['basic']['email_callback'])){
-      call_user_func_array(self::$config['basic']['email_callback'], array($email, $subject, $body));
+    if(is_callable($this->config['basic']['email_callback'])){
+      call_user_func_array($this->config['basic']['email_callback'], array($this, $email, $subject, $body));
     }else{
       $headers = array();
       $headers[] = "MIME-Version: 1.0";
       $headers[] = "Content-type: text/html; charset=iso-8859-1";
-      $headers[] = "From: ". self::$config['basic']['email'];
-      $headers[] = "Reply-To: ". self::$config['basic']['email'];
+      $headers[] = "From: ". $this->config['basic']['email'];
+      $headers[] = "Reply-To: ". $this->config['basic']['email'];
       mail($email, $subject, $body, implode("\r\n", $headers));
     }
   }
@@ -1236,10 +1253,10 @@ class LS {
   /**
    * CSRF Protection
    */
-  public static function csrf($type = ""){
+  public function csrf($type = ""){
     if(!isset($_COOKIE['csrf_token'])){
       $csrf_token = self::rand_string(5);
-      setcookie("csrf_token", $csrf_token, 0, self::$config['cookies']['path'], self::$config['cookies']['domain']);
+      setcookie("csrf_token", $csrf_token, 0, $this->config['cookies']['path'], $this->config['cookies']['domain']);
     }else{
       $csrf_token = $_COOKIE['csrf_token'];
     }
