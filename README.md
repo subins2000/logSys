@@ -1,6 +1,8 @@
 logSys
 ======
 
+[![Build Status](https://travis-ci.org/subins2000/logSys.svg?branch=master)](https://travis-ci.org/subins2000/logSys)
+
 PHP Advanced Login System as part of the [Francium Project](http://subinsb.com/the-francium-project)
 
 See this [Blog Post](http://subinsb.com/php-logsys) for more details
@@ -70,7 +72,11 @@ This version changes the algorithm used to hash passwords. If you're using an ol
 Testing
 =======
 
-Run `phpunit`.
+Edit the database configuration inside the `tests/*.xml` files and run :
+
+```
+phpunit -c tests/phpunit.mysql.xml && phpunit -c tests/phpunit.sqlite.xml && phpunit -c tests/phpunit.postgresql.xml
+```
 
 ## Config
 
