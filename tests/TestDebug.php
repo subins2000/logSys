@@ -18,8 +18,10 @@ class TestDebug extends PHPUnit_Framework_TestCase {
 
     $config = array(
       "db" => array(
+        "type" => $GLOBALS['DB_TYPE'],
         "host" => null,
-        "port" => 0
+        "port" => 0,
+        "sqlite_path" => "/file_do_not_exist",
       ),
       "features" => array(
         "auto_init" => false,
@@ -30,11 +32,6 @@ class TestDebug extends PHPUnit_Framework_TestCase {
         "log_file" => self::$log_file
       ),
     );
-
-    if( $GLOBALS["DB_TYPE"] === "sqlite" ){
-      $config["db"]["type"] = "sqlite";
-      $config["db"]["sqlite_path"] = "/file_do_not_exist";
-    }
 
     new \Fr\LS($config);
 
