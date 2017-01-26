@@ -15,6 +15,6 @@ before_install:
   - psql -c 'create database tests;' -U postgres
 
 script:
-  - phpunit tests/phpunit.mysql.xml
-  - phpunit tests/phpunit.sqlite.xml
-  - phpunit tests/phpunit.postgresql.xml
+  - phpunit -c tests/phpunit.mysql.xml
+  - phpunit -c tests/phpunit.sqlite.xml
+  - phpunit -c tests/phpunit.postgresql.xml
