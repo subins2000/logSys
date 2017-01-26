@@ -1,9 +1,3 @@
--- Host: localhost
--- Generation Time: May 14, 2014 at 08:26 PM
--- Server version: 5.5.35-1ubuntu1
--- PHP Version: 5.5.9-1ubuntu4
--- --------------------------------------------------------
-
 --
 -- Table structure for table `users`
 --
@@ -19,10 +13,10 @@ CREATE TABLE IF NOT EXISTS `users` (
 );
 
 --
--- Table structure for table `resetTokens`
+-- Table structure for table `user_tokens`
 --
 
-CREATE TABLE IF NOT EXISTS `resetTokens` (
+CREATE TABLE IF NOT EXISTS `user_tokens` (
 	`token` varchar(40) NOT NULL,
 	`uid` INTEGER NOT NULL,
 	`requested` varchar(20) NOT NULL

@@ -15,11 +15,11 @@
         </testsuite>
     </testsuites>
     <php>
-        <var name="DB_TYPE" value="sqlite" />
+        <var name="DB_TYPE" value="mysql" />
         <var name="DB_HOST" value="localhost" />
         <var name="DB_PORT" value="3306" />
         <var name="DB_USERNAME" value="root" />
         <var name="DB_PASSWORD" value="backstreetboys" />
-        <var name="DB_DBNAME" value="tests" />
+        <var name="DB_NAME" value="tests" />
     </php>
 </phpunit>
