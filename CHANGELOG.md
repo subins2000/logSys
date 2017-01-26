@@ -1,6 +1,53 @@
 # Changelog
 
-[Shamil Kashmeri](https://plus.google.com/u/0/105291845791114608759) asked whether he should upgrade from 0.1 to 0.3 and I thought it would be a good idea for making a changelog instead of explaining the new features everytime someone asks. So, here you go :
+[Shamil Kashmeri](https://plus.google.com/u/0/105291845791114608759) asked whether he should upgrade from 0.1 to 0.3 and I thought it would be a good idea for making a changelog instead of explaining the new features everytime someone asks.
+
+Each version section also has instructions on how to modify your existing logSys calls to work on the new version.
+
+## 0.8
+
+* logSys is now an object class. Static methods has been replaced
+* logSys object is passed by reference as first parameter to all callbacks
+
+### Object
+
+Instead of this :
+
+```
+\Fr\LS::config($config);
+```
+
+This is the new way :
+
+```
+$LS = new \Fr\LS($config);
+```
+
+All the functions can be called just like before but on `$LS` object :
+
+```
+$LS->login();
+$LS->register();
+$LS->forgotPassword();
+```
+
+### Callbacks
+
+The first parameter of all callbacks will be the logSys object passed by reference. So, if you had a callback like this before :
+
+```
+"send_callback" => function($userID, $token){
+  ...
+}
+```
+
+You should replace that with this :
+
+```
+"send_callback" => function(&$LS, $userID, $token){
+  ...
+}
+```
 
 ## 0.7
 
