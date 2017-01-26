@@ -18,7 +18,7 @@
         <var name="DB_TYPE" value="postgresql" />
         <var name="DB_HOST" value="localhost" />
         <var name="DB_PORT" value="5432" />
-        <var name="DB_USERNAME" value="root" />
+        <var name="DB_USERNAME" value="postgres" />
         <var name="DB_PASSWORD" value="password" />
         <var name="DB_NAME" value="tests" />
     </php>
