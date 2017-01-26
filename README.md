@@ -22,7 +22,7 @@ logSys includes but not limited to :
 * Device Manager to know the devices that are currently logged in
 * Debugging/Logging made simpler
 * Simple Examples to get you started
-* Lightweight (**42 KB of Awesomeness...**)
+* Lightweight (**47 KB of Awesomeness...**)
 * A very active project
 
 Installation
@@ -76,12 +76,4 @@ Edit the database configuration inside the `tests/*.xml` files and run :
 
 ```
 phpunit -c tests/phpunit.mysql.xml && phpunit -c tests/phpunit.sqlite.xml && phpunit -c tests/phpunit.postgresql.xml
-```
-
-## Config
-
-Edit `phpunit.xml` and change `DB_TYPE` value to either `mysql` or `sqlite` :
-
-```xml
-<var name="DB_TYPE" value="sqlite" />
 ```
