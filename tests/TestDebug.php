@@ -30,14 +30,21 @@ class TestDebug extends PHPUnit_Framework_TestCase {
         "log_file" => self::$log_file
       ),
     );
-    \Fr\LS::config($config);
+
+    if( $GLOBALS["DB_TYPE"] === "sqlite" ){
+      $config["db"]["type"] = "sqlite";
+      $config["db"]["sqlite_path"] = "/file_do_not_exist";
+    }
+
+    new \Fr\LS($config);
 
     $this->assertEquals(true, file_exists(self::$log_file));
-    $this->assertContains("Couldn't connect to database", file_get_contents(self::$log_file));
+    $this->assertContains("Could not connect to database", file_get_contents(self::$log_file));
   }
 
   public static function tearDownAfterClass(){
-    unlink(self::$log_file);
+    if( file_exists(self::$log_file) )
+      unlink(self::$log_file);
   }
 
 }

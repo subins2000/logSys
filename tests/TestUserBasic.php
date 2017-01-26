@@ -1,7 +1,15 @@
 <?php
+
+use Fr\LS;
+
 class TestUserBasic extends PHPUnit_Framework_TestCase {
 
   private static $pdo = null;
+
+  /**
+   * @var LS
+   */
+  private $LS;
 
   public function setUp(){
     self::$pdo = new PDO($GLOBALS['DB_DSN'], $GLOBALS['DB_USERNAME'], $GLOBALS['DB_PASSWORD'], array(
@@ -28,7 +36,7 @@ class TestUserBasic extends PHPUnit_Framework_TestCase {
       $config["db"]["sqlite_path"] = $GLOBALS['DB_SQLITE_PATH'];
     }
 
-    \Fr\LS::config($config);
+    $this->LS = new LS($config);
   }
 
   public function testUserRegister(){
@@ -37,7 +45,7 @@ class TestUserBasic extends PHPUnit_Framework_TestCase {
       "name" => "ABC",
       "created" => date("Y-m-d H:i:s")
     );
-    \Fr\LS::register("test", "abc", $info);
+    $this->LS->register("test", "abc", $info);
 
     $sth = self::$pdo->query("SELECT * FROM `users` WHERE `id` = '1'");
     $r = $sth->fetch(\PDO::FETCH_ASSOC);
@@ -49,7 +57,7 @@ class TestUserBasic extends PHPUnit_Framework_TestCase {
   }
 
   public function testUserInfo(){
-    $user = \Fr\LS::getUser("*", 1);
+    $user = $this->LS->getUser("*", 1);
 
     $sth = self::$pdo->query("SELECT * FROM `users` WHERE `id` = '1'");
     $r = $sth->fetch(\PDO::FETCH_ASSOC);
@@ -61,7 +69,7 @@ class TestUserBasic extends PHPUnit_Framework_TestCase {
   }
 
   public static function tearDownAfterClass(){
-    self::$pdo->exec("DROP TABLE `users`;DROP TABLE `user_devices`;DROP TABLE `resetTokens`;");
+    self::$pdo->exec("DROP TABLE `users`;DROP TABLE `user_devices`;DROP TABLE `user_tokens`;");
   }
 
 }
