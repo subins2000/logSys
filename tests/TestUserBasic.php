@@ -19,8 +19,9 @@ class TestUserBasic extends PHPUnit_Framework_TestCase {
 
     $config = array(
       "db" => array(
-        "host" => $GLOBALS['DB_HOST'],
-        "port" => $GLOBALS['DB_PORT'],
+        "type" => $GLOBALS['DB_TYPE'],
+        "host" => isset($GLOBALS['DB_HOST']) ? $GLOBALS['DB_HOST'] : null,
+        "port" => isset($GLOBALS['DB_PORT']) ? $GLOBALS['DB_PORT'] : null,
         "username" => $GLOBALS['DB_USERNAME'],
         "password" => $GLOBALS['DB_PASSWORD'],
         "name" => $GLOBALS['DB_NAME']
@@ -32,7 +33,6 @@ class TestUserBasic extends PHPUnit_Framework_TestCase {
     );
 
     if($GLOBALS['DB_TYPE'] === "sqlite"){
-      $config["db"]["type"] = "sqlite";
       $config["db"]["sqlite_path"] = $GLOBALS['DB_SQLITE_PATH'];
     }
 
@@ -47,7 +47,7 @@ class TestUserBasic extends PHPUnit_Framework_TestCase {
     );
     $this->LS->register("test", "abc", $info);
 
-    $sth = self::$pdo->query("SELECT * FROM `users` WHERE `id` = '1'");
+    $sth = self::$pdo->query("SELECT * FROM users WHERE id = '1'");
     $r = $sth->fetch(\PDO::FETCH_ASSOC);
 
     $this->assertEquals("test", $r["username"]);
@@ -59,7 +59,7 @@ class TestUserBasic extends PHPUnit_Framework_TestCase {
   public function testUserInfo(){
     $user = $this->LS->getUser("*", 1);
 
-    $sth = self::$pdo->query("SELECT * FROM `users` WHERE `id` = '1'");
+    $sth = self::$pdo->query("SELECT * FROM users WHERE id = '1'");
     $r = $sth->fetch(\PDO::FETCH_ASSOC);
 
     $this->assertEquals($r["username"], $user["username"]);
@@ -69,7 +69,7 @@ class TestUserBasic extends PHPUnit_Framework_TestCase {
   }
 
   public static function tearDownAfterClass(){
-    self::$pdo->exec("DROP TABLE `users`;DROP TABLE `user_devices`;DROP TABLE `user_tokens`;");
+    self::$pdo->exec("DROP TABLE users;DROP TABLE user_devices;DROP TABLE user_tokens;");
   }
 
 }

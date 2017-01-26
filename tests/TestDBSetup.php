@@ -27,6 +27,18 @@ class TestDBSetup extends PHPUnit_Framework_TestCase {
 
       $sth = $this->pdo->query("SELECT COUNT(1) FROM `sqlite_master` WHERE type='table' AND `name` LIKE 'user_tokens'");
       $this->assertEquals(1, $sth->fetchColumn());
+    }else if($GLOBALS['DB_TYPE'] === "postgresql"){
+      $sql = file_get_contents(__DIR__ . "/../sql/postgresql.sql");
+      $this->pdo->exec($sql);
+
+      $sth = $this->pdo->query("SELECT * FROM pg_catalog.pg_tables WHERE tablename = 'users'");
+      $this->assertEquals(1, $sth->rowCount());
+
+      $sth = $this->pdo->query("SELECT * FROM pg_catalog.pg_tables WHERE tablename = 'user_devices'");
+      $this->assertEquals(1, $sth->rowCount());
+
+      $sth = $this->pdo->query("SELECT * FROM pg_catalog.pg_tables WHERE tablename = 'user_tokens'");
+      $this->assertEquals(1, $sth->rowCount());
     }else{
       $sql = file_get_contents(__DIR__ . "/../sql/mysql.sql");
       $this->pdo->exec($sql);

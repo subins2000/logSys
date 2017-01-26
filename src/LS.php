@@ -495,7 +495,7 @@ class LS {
            */
           $this->logout();
         }else if($this->config['two_step_login']['first_check_only'] === false || ($this->config['two_step_login']['first_check_only'] === true && !isset($_SESSION['device_check']))){
-          $sql = $this->dbh->prepare("SELECT '1' FROM `". $this->config['two_step_login']['devices_table'] ."` WHERE `uid` = ? AND `token` = ?");
+          $sql = $this->dbh->prepare("SELECT '1' FROM ". $this->config['two_step_login']['devices_table'] ." WHERE uid = ? AND token = ?");
           $sql->execute(array($this->userID, $_COOKIE[$this->config["cookies"]["names"]["device"]]));
 
           /**
@@ -554,9 +554,9 @@ class LS {
      * get an array with key as the column name.
      */
     if($this->config['features']['email_login'] === true){
-      $query = "SELECT `". $this->config["db"]["columns"]["id"] ."`, `". $this->config["db"]["columns"]["password"] ."`, `". $this->config["db"]["columns"]["attempt"] ."` FROM `". $this->config['db']['table'] ."` WHERE `". $this->config["db"]["columns"]["username"] ."`=:login OR `". $this->config["db"]["columns"]["email"] ."`=:login ORDER BY `". $this->config["db"]["columns"]["id"] ."` LIMIT 1";
+      $query = "SELECT ". $this->config["db"]["columns"]["id"] .", ". $this->config["db"]["columns"]["password"] .", ". $this->config["db"]["columns"]["attempt"] ." FROM ". $this->config['db']['table'] ." WHERE ". $this->config["db"]["columns"]["username"] ."=:login OR ". $this->config["db"]["columns"]["email"] ."=:login ORDER BY ". $this->config["db"]["columns"]["id"] ." LIMIT 1";
     }else{
-      $query = "SELECT `". $this->config["db"]["columns"]["id"] ."`, `". $this->config["db"]["columns"]["password"] ."`, `". $this->config["db"]["columns"]["attempt"] ."` FROM `". $this->config['db']['table'] ."` WHERE `". $this->config["db"]["columns"]["username"] ."`=:login ORDER BY `". $this->config["db"]["columns"]["id"] ."` LIMIT 1";
+      $query = "SELECT ". $this->config["db"]["columns"]["id"] .", ". $this->config["db"]["columns"]["password"] .", ". $this->config["db"]["columns"]["attempt"] ." FROM ". $this->config['db']['table'] ." WHERE ". $this->config["db"]["columns"]["username"] ."=:login ORDER BY ". $this->config["db"]["columns"]["id"] ." LIMIT 1";
     }
 
     $sql = $this->dbh->prepare($query);
@@ -687,13 +687,13 @@ class LS {
 
       if( count($other) == 0 ){
         /* If there is no other fields mentioned, make the default query */
-        $sql = $this->dbh->prepare("INSERT INTO `". $this->config['db']['table'] ."` (`". $this->config["db"]["columns"]["username"] ."`, `". $this->config["db"]["columns"]["password"] ."`) VALUES(:username, :password)");
+        $sql = $this->dbh->prepare("INSERT INTO ". $this->config['db']['table'] ." (". $this->config["db"]["columns"]["username"] .", ". $this->config["db"]["columns"]["password"] .") VALUES(:username, :password)");
       }else{
         /* if there are other fields to add value to, make the query and bind values according to it */
         $keys   = array_keys($other);
         $columns = implode(",", $keys);
         $colVals = implode(",:", $keys);
-        $sql   = $this->dbh->prepare("INSERT INTO `". $this->config['db']['table'] ."` (`". $this->config["db"]["columns"]["username"] ."`, `". $this->config["db"]["columns"]["password"] ."`, $columns) VALUES(:username, :password, :$colVals)");
+        $sql   = $this->dbh->prepare("INSERT INTO ". $this->config['db']['table'] ." (". $this->config["db"]["columns"]["username"] .", ". $this->config["db"]["columns"]["password"] .", $columns) VALUES(:username, :password, :$colVals)");
         foreach($other as $key => $value){
           $value = htmlspecialchars($value);
           $sql->bindValue(":$key", $value);
@@ -746,7 +746,7 @@ class LS {
        * The user gave the password reset token. Check if the token is valid.
        */
       $reset_pass_token = urldecode($_GET['resetPassToken']);
-      $sql = $this->dbh->prepare("SELECT COUNT(1) FROM `". $this->config['db']['token_table'] ."` WHERE `token` = ?");
+      $sql = $this->dbh->prepare("SELECT COUNT(1) FROM ". $this->config['db']['token_table'] ." WHERE token = ?");
       $sql->execute(array($reset_pass_token));
 
       if($sql->fetchColumn() == 0 || $reset_pass_token == ""){
@@ -767,7 +767,7 @@ class LS {
       }
     }elseif(isset($_POST['logSysForgotPassChange']) && isset($_POST['logSysForgotPassNewPassword']) && isset($_POST['logSysForgotPassRetypedPassword'])){
       $reset_pass_token = urldecode($_POST['token']);
-      $sql = $this->dbh->prepare("SELECT `uid` FROM `". $this->config['db']['token_table'] ."` WHERE `token` = ?");
+      $sql = $this->dbh->prepare("SELECT uid FROM ". $this->config['db']['token_table'] ." WHERE token = ?");
       $sql->execute(array($reset_pass_token));
 
       $userID = $sql->fetchColumn();
@@ -798,7 +798,7 @@ class LS {
             /**
              * The token shall not be used again, so remove it.
              */
-            $sql = $this->dbh->prepare("DELETE FROM `". $this->config['db']['token_table'] ."` WHERE `token` = ?");
+            $sql = $this->dbh->prepare("DELETE FROM ". $this->config['db']['token_table'] ." WHERE token = ?");
             $sql->execute(array($reset_pass_token));
 
             $curStatus = "passwordChanged"; // The password was successfully changed
@@ -817,7 +817,7 @@ class LS {
           "identity_type" => $identName
         ));
       }else{
-        $sql = $this->dbh->prepare("SELECT `". $this->config["db"]["columns"]["email"] ."`, `". $this->config["db"]["columns"]["id"] ."` FROM `". $this->config['db']['table'] ."` WHERE `". $this->config["db"]["columns"]["username"] ."`=:login OR `". $this->config["db"]["columns"]["email"] ."`=:login");
+        $sql = $this->dbh->prepare("SELECT ". $this->config["db"]["columns"]["email"] .", ". $this->config["db"]["columns"]["id"] ." FROM ". $this->config['db']['table'] ." WHERE ". $this->config["db"]["columns"]["username"] ."=:login OR ". $this->config["db"]["columns"]["email"] ."=:login");
         $sql->bindValue(":login", $identification);
 
         $sql->execute();
@@ -834,7 +834,7 @@ class LS {
            * Make token and insert into the table
            */
           $token = self::rand_string(40);
-          $sql = $this->dbh->prepare("INSERT INTO `". $this->config['db']['token_table'] ."` (`token`, `uid`, `requested`) VALUES (?, ?, UNIX_TIMESTAMP())");
+          $sql = $this->dbh->prepare("INSERT INTO ". $this->config['db']['token_table'] ." (token, uid, requested) VALUES (?, ?, UNIX_TIMESTAMP())");
           $sql->execute(array($token, $uid));
           $encodedToken = urlencode($token);
 
@@ -862,7 +862,7 @@ class LS {
   public function changePassword($newpass){
     if($this->loggedIn){
       $hashedPass = password_hash($newpass . $this->config['keys']['salt'], PASSWORD_DEFAULT);
-      $sql = $this->dbh->prepare("UPDATE `". $this->config['db']['table'] ."` SET `". $this->config["db"]["columns"]["password"] ."` = ? WHERE `". $this->config["db"]["columns"]["id"] ."` = ?");
+      $sql = $this->dbh->prepare("UPDATE ". $this->config['db']['table'] ." SET ". $this->config["db"]["columns"]["password"] ." = ? WHERE ". $this->config["db"]["columns"]["id"] ." = ?");
       $sql->execute(array($hashedPass, $this->userID));
       return true;
     }else{
@@ -877,9 +877,9 @@ class LS {
    */
   public function userExists($identification){
     if($this->config['features']['email_login'] === true){
-      $query = "SELECT COUNT(1) FROM `". $this->config['db']['table'] ."` WHERE `". $this->config["db"]["columns"]["username"] ."`=:login OR `". $this->config["db"]["columns"]["email"] ."`=:login";
+      $query = "SELECT COUNT(1) FROM ". $this->config['db']['table'] ." WHERE ". $this->config["db"]["columns"]["username"] ."=:login OR ". $this->config["db"]["columns"]["email"] ."=:login";
     }else{
-      $query = "SELECT COUNT(1) FROM `". $this->config['db']['table'] ."` WHERE `". $this->config["db"]["columns"]["username"] ."`=:login";
+      $query = "SELECT COUNT(1) FROM ". $this->config['db']['table'] ." WHERE ". $this->config["db"]["columns"]["username"] ."=:login";
     }
     $sql = $this->dbh->prepare($query);
     $sql->execute(array(
@@ -898,13 +898,13 @@ class LS {
     }
 
     if( is_array($what) ){
-      $columns = implode("`,`", $what);
-      $columns  = "`{$columns}`";
+      $columns = implode(",", $what);
+      $columns  = "{$columns}";
     }else{
-      $columns = $what != "*" ? "`$what`" : "*";
+      $columns = $what != "*" ? "$what" : "*";
     }
 
-    $sql = $this->dbh->prepare("SELECT {$columns} FROM `". $this->config['db']['table'] ."` WHERE `". $this->config["db"]["columns"]["id"] ."` = ? ORDER BY `". $this->config["db"]["columns"]["id"] ."` LIMIT 1");
+    $sql = $this->dbh->prepare("SELECT {$columns} FROM ". $this->config['db']['table'] ." WHERE ". $this->config["db"]["columns"]["id"] ." = ? ORDER BY ". $this->config["db"]["columns"]["id"] ." LIMIT 1");
     $sql->execute(array($user));
 
     $data = $sql->fetch(\PDO::FETCH_ASSOC);
@@ -926,11 +926,11 @@ class LS {
 
       $columns = "";
       foreach($toUpdate as $k => $v){
-        $columns .= "`$k` = :$k, ";
+        $columns .= "$k = :$k, ";
       }
       $columns = substr($columns, 0, -2); // Remove last ","
 
-      $sql = $this->dbh->prepare("UPDATE `". $this->config['db']['table'] ."` SET {$columns} WHERE `". $this->config["db"]["columns"]["id"] ."`=:id");
+      $sql = $this->dbh->prepare("UPDATE ". $this->config['db']['table'] ." SET {$columns} WHERE ". $this->config["db"]["columns"]["id"] ."=:id");
       $sql->bindValue(":id", $user);
       foreach($toUpdate as $key => $value){
         $value = htmlspecialchars($value);
@@ -1009,7 +1009,7 @@ class LS {
       $uid = $_POST['logSys_two_step_login-uid'];
       $token = $_POST['logSys_two_step_login-token'];
 
-      $sql = $this->dbh->prepare("SELECT COUNT(1) FROM `". $this->config['db']['token_table'] ."` WHERE `token` = ? AND `uid` = ?");
+      $sql = $this->dbh->prepare("SELECT COUNT(1) FROM ". $this->config['db']['token_table'] ." WHERE token = ? AND uid = ?");
       $sql->execute(array($token, $uid));
 
       if($sql->fetchColumn() == 0){
@@ -1029,7 +1029,7 @@ class LS {
          */
         if(isset($_POST['logSys_two_step_login-dontask'])){
           $device_token = self::rand_string(10);
-          $sql = $this->dbh->prepare("INSERT INTO `". $this->config['two_step_login']['devices_table'] ."` (`uid`, `token`, `last_access`) VALUES (?, ?, NOW())");
+          $sql = $this->dbh->prepare("INSERT INTO ". $this->config['two_step_login']['devices_table'] ." (uid, token, last_access) VALUES (?, ?, NOW())");
           $sql->execute(array($uid, $device_token));
           setcookie($this->config["cookies"]["names"]["device"], $device_token, strtotime($this->config['two_step_login']['expire']), $this->config['cookies']['path'], $this->config['cookies']['domain']);
         }else{
@@ -1042,7 +1042,7 @@ class LS {
         /**
          * Revoke token from reusing
          */
-        $sql = $this->dbh->prepare("DELETE FROM `". $this->config['db']['token_table'] ."` WHERE `token` = ? AND `uid` = ?");
+        $sql = $this->dbh->prepare("DELETE FROM ". $this->config['db']['token_table'] ." WHERE token = ? AND uid = ?");
         $sql->execute(array($token, $uid));
         $this->login($this->getUser("username", $uid), "", isset($_POST['logSys_two_step_login-remember_me']));
       }
@@ -1066,14 +1066,14 @@ class LS {
          * Check if device is verfied so that 2 Step Verification can be skipped
          */
         if(isset($_COOKIE[$this->config["cookies"]["names"]["device"]])){
-          $sql = $this->dbh->prepare("SELECT 1 FROM `". $this->config['two_step_login']['devices_table'] ."` WHERE `uid` = ? AND `token` = ?");
+          $sql = $this->dbh->prepare("SELECT 1 FROM ". $this->config['two_step_login']['devices_table'] ." WHERE uid = ? AND token = ?");
           $sql->execute(array($uid, $_COOKIE[$this->config["cookies"]["names"]["device"]]));
           if($sql->fetchColumn() == "1"){
             $verfied = true;
             /**
              * Update last accessed time
              */
-            $sql = $this->dbh->prepare("UPDATE `". $this->config['two_step_login']['devices_table'] ."` SET `last_access` = NOW() WHERE `uid` = ? AND `token` = ?");
+            $sql = $this->dbh->prepare("UPDATE ". $this->config['two_step_login']['devices_table'] ." SET last_access = NOW() WHERE uid = ? AND token = ?");
             $sql->execute(array($uid, $_COOKIE[$this->config["cookies"]["names"]["device"]]));
 
             $this->login($this->getUser("username", $uid), "", $remember_me);
@@ -1099,7 +1099,7 @@ class LS {
           /**
            * Save the token in DB
            */
-          $sql = $this->dbh->prepare("INSERT INTO `". $this->config['db']['token_table'] ."` (`token`, `uid`, `requested`) VALUES (?, ?, NOW())");
+          $sql = $this->dbh->prepare("INSERT INTO ". $this->config['db']['token_table'] ." (token, uid, requested) VALUES (?, ?, NOW())");
           $sql->execute(array($token, $uid));
 
           $that = $this;
@@ -1133,7 +1133,7 @@ class LS {
    */
   public function getDevices(){
     if($this->loggedIn){
-      $sql = $this->dbh->prepare("SELECT * FROM `". $this->config['two_step_login']['devices_table'] ."` WHERE `uid` = ?");
+      $sql = $this->dbh->prepare("SELECT * FROM ". $this->config['two_step_login']['devices_table'] ." WHERE uid = ?");
       $sql->execute(array($this->userID));
       return $sql->fetchAll(\PDO::FETCH_ASSOC);
     }else{
@@ -1146,7 +1146,7 @@ class LS {
    */
   public function revokeDevice($device_token){
     if($this->loggedIn){
-      $sql = $this->dbh->prepare("DELETE FROM `". $this->config['two_step_login']['devices_table'] ."` WHERE `uid` = ? AND `token` = ?");
+      $sql = $this->dbh->prepare("DELETE FROM ". $this->config['two_step_login']['devices_table'] ." WHERE uid = ? AND token = ?");
       $sql->execute(array($this->userID, $device_token));
       if(isset($_SESSION['device_check'])){
         unset($_SESSION['device_check']);
