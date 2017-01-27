@@ -602,7 +602,7 @@ class LS {
        * If using OAuth, you have to login someone without knowing their password,
        * this usage is helpful. But, it makes a serious security problem too.
        * Hence, before calling \Fr\LS::login() in the login page, it is
-       * required to check whether the password fieldis left blank
+       * required to check whether the password field is left blank
        */
       if(!isset($blocked) && ($password === "" || password_verify($password . $this->config['keys']['salt'], $us_pass) )){
         if($cookies === true){
@@ -787,27 +787,16 @@ class LS {
           $curStatus = "passwordDontMatch"; // The new password and retype password submitted didn't match
           echo $this->getOutput($curStatus);
         }else{
+          $this->changePassword($_POST['logSysForgotPassNewPassword'], $userID);
+
           /**
-           * We must create a fake assumption that the user is logged in to
-           * change the password as \Fr\LS::changePassword()
-           * requires the user to be logged in.
+           * The token shall not be used again, so remove it.
            */
-          $this->userID = $userID;
-          $this->loggedIn = true;
+          $sql = $this->dbh->prepare("DELETE FROM ". $this->config['db']['token_table'] ." WHERE token = ?");
+          $sql->execute(array($reset_pass_token));
 
-          if($this->changePassword($_POST['logSysForgotPassNewPassword'])){
-            $this->userID = false;
-            $this->loggedIn = false;
-
-            /**
-             * The token shall not be used again, so remove it.
-             */
-            $sql = $this->dbh->prepare("DELETE FROM ". $this->config['db']['token_table'] ." WHERE token = ?");
-            $sql->execute(array($reset_pass_token));
-
-            $curStatus = "passwordChanged"; // The password was successfully changed
-            echo $this->getOutput($curStatus);
-          }
+          $curStatus = "passwordChanged"; // The password was successfully changed
+          echo $this->getOutput($curStatus);
         }
       }
     }elseif(isset($_POST['identification'])){
@@ -862,17 +851,21 @@ class LS {
 
   /**
    * A function that handles the logged in user to change her/his password
+   *
+   * @param  string $newPassword The new password
+   * @return boolean             Whether operation was succesful
    */
-  public function changePassword($newpass){
-    if($this->loggedIn){
-      $hashedPass = password_hash($newpass . $this->config['keys']['salt'], PASSWORD_DEFAULT);
-      $sql = $this->dbh->prepare("UPDATE ". $this->config['db']['table'] ." SET ". $this->config["db"]["columns"]["password"] ." = ? WHERE ". $this->config["db"]["columns"]["id"] ." = ?");
-      $sql->execute(array($hashedPass, $this->userID));
-      return true;
-    }else{
-      echo $this->getOutput("notLoggedIn");
-      return "notLoggedIn";
+  public function changePassword($newPassword, $userID = null){
+    if($userID === null){
+      $userID = $this->userID;
     }
+
+    $hashedPassword = password_hash($newPassword . $this->config['keys']['salt'], PASSWORD_DEFAULT);
+    $this->updateUser(array(
+      "password" => $hashedPassword
+    ), $userID);
+
+    return true;
   }
 
   /**
