@@ -1179,6 +1179,14 @@ class LS {
   }
 
   /**
+   * Whether a user is logged in
+   * @return boolean
+   */
+  public function isLoggedIn(){
+    return $this->loggedIn;
+  }
+
+  /**
    * ---------------------
    * Extra Tools/Functions
    * ---------------------
