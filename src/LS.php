@@ -355,6 +355,10 @@ class LS {
      * Add the login page to the array of pages that doesn't need logging in
      */
     array_push($this->config['pages']['no_login'], $this->config['pages']['login_page']);
+
+    if( $this->config["debug"]["enable"] ){
+      ini_set("display_errors", "on");
+    }
   }
 
   /**
