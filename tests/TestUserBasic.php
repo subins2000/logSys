@@ -51,7 +51,7 @@ class TestUserBasic extends PHPUnit_Framework_TestCase {
     $r = $sth->fetch(\PDO::FETCH_ASSOC);
 
     $this->assertEquals("test", $r["username"]);
-    $this->assertEquals("test@test.com", $r["email"]);
+    $this->assertEquals($info["email"], $r["email"]);
     $this->assertEquals($info["name"], $r["name"]);
     $this->assertEquals($info["created"], $r["created"]);
   }
@@ -66,6 +66,26 @@ class TestUserBasic extends PHPUnit_Framework_TestCase {
     $this->assertEquals($r["email"], $user["email"]);
     $this->assertEquals($r["name"], $user["name"]);
     $this->assertEquals($r["created"], $user["created"]);
+  }
+
+  public function testUpdateUserInfo(){
+    $email = $this->LS->getUser("email", 1);
+    $this->assertEquals("test@test.com", $email);
+
+    $this->LS->updateUser(array(
+      "email" => "test1@test.com"
+    ), 1);
+
+    $email = $this->LS->getUser("email", 1);
+    $this->assertEquals("test1@test.com", $email);
+  }
+
+  public function testChangePassword(){
+    $this->assertNotEquals(false, $this->LS->login("test", "abc", false, false));
+
+    $this->LS->changePassword("xyz", 1);
+
+    $this->assertNotEquals(false, $this->LS->login("test", "xyz", false, false));
   }
 
   public static function tearDownAfterClass(){
