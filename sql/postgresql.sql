@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
   id SERIAL,
   username text NOT NULL,
   email text NOT NULL,
-  password character(255) NOT NULL,
+  password text NOT NULL,
   name text NOT NULL,
   created text NOT NULL,
   attempt text NOT NULL DEFAULT '0',
