@@ -75,5 +75,5 @@ Testing
 Edit the database configuration inside the `tests/*.xml` files and run :
 
 ```
-phpunit -c tests/phpunit.mysql.xml && phpunit -c tests/phpunit.sqlite.xml && phpunit -c tests/phpunit.postgresql.xml
+phpunit -c tests/phpunit.mysql.xml && phpunit -c tests/phpunit.postgresql.xml && phpunit -c tests/phpunit.sqlite.xml
 ```
