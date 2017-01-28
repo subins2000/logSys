@@ -548,9 +548,15 @@ class LS {
   }
 
   /**
-   * A function to login the user with the username and password.
-   * As of version 0.4, it is required to include the remember_me parameter
-   * when calling this function to avail the "Remember Me" feature.
+   * Login the user
+   * @param  string               $username    Username or email
+   * @param  boolean|string       $password    Password as string or
+   *                                           FALSE for skipping password check
+   * @param  boolean              $remember_me Remember me
+   * @param  boolean              $cookies     Should cookies be created and redirected
+   * @return array|boolean|string              Array if user is blocked
+   *                                           TRUE if login was success
+   *                                           User ID if login was success and $cookies FALSE
    */
   public function login($username, $password, $remember_me = false, $cookies = true){
     /**
@@ -596,15 +602,8 @@ class LS {
           ), $us_id);
         }
       }
-      /**
-       * Why login if password is empty ?
-       * --------------------------------
-       * If using OAuth, you have to login someone without knowing their password,
-       * this usage is helpful. But, it makes a serious security problem too.
-       * Hence, before calling \Fr\LS::login() in the login page, it is
-       * required to check whether the password field is left blank
-       */
-      if(!isset($blocked) && ($password === "" || password_verify($password . $this->config['keys']['salt'], $us_pass) )){
+
+      if( !isset($blocked) && ($password === false || password_verify($password . $this->config['keys']['salt'], $us_pass) ) ){
         if($cookies === true){
 
           $_SESSION[$this->config["cookies"]["names"]["current_user"]] = $us_id;
@@ -987,15 +986,22 @@ class LS {
   /**
    * 2 Step Verification Login Process
    * ---------------------------------
-   * When user logs in, it checks whether there is a cookie named $this->config["cookies"]["names"]["device"] and if there is :
-   *    1. Checks `config` -> `two_step_login` -> `devices_table` table in DB whethere there is a token with value as that of $_COOKIES[$this->config["cookies"]["names"]["device"]]
-   *    2. If there is a row in table, then the "Enter Received Token" form is not shown and is directly logged in if username & pass is correct
-   * If there is not a cookie, then :
-   *    1. The "Enter Received token" form is shown
-   *    2. If the token entered is correct, then a unique string is set as $_COOKIE[$this->config["cookies"]["names"]["device"]] value and inserted to `config` -> `two_step_login` -> `devices_table` table in DB
-   *    3. The $_COOKIE[$this->config["cookies"]["names"]["device"]] is set to be stored for 4 months
-   * ---------------------
-   * ^ In the above instructions, the token sending to E-Mail/SMS is not mentioned. Assume that it is done
+   * When user logs in, it checks whether there is a device cookie.
+   * If there is :
+   *   * Checks whether device is registered
+   *   * If registered and username & password is correct, user is logged in
+   * If there is not :
+   *   * Token is sent
+   *   * The "Enter Received token" form is shown
+   *   * If the token entered is correct, then a device ID is inserted to table
+   *   * The cookie with device ID is created
+   * @see  LS::login()      Parameters are similar
+   *
+   * @param  string         $identification Similar to LS::login()
+   * @param  string         $password       Similar to LS::login()
+   * @param  boolean        $remember_me    Similar to LS::login()
+   * @return boolean|string                 Whether login was successful
+   *                                        Current state of 2 Step Login
    */
   public function twoStepLogin($identification = "", $password = "", $remember_me = false){
     if(isset($_POST['logSys_two_step_login-token']) && isset($_POST['logSys_two_step_login-uid']) && $_SESSION['logSys_two_step_login-first_step'] === '1'){
@@ -1041,10 +1047,10 @@ class LS {
          */
         $sql = $this->dbh->prepare("DELETE FROM ". $this->config['db']['token_table'] ." WHERE token = ? AND uid = ?");
         $sql->execute(array($token, $uid));
-        $this->login($this->getUser("username", $uid), "", isset($_POST['logSys_two_step_login-remember_me']));
+        $this->login($this->getUser("username", $uid), false, isset($_POST['logSys_two_step_login-remember_me']));
       }
       return true;
-    }else if($identification != "" && $password != ""){
+    }else if($identification !== "" && $password !== ""){
       $login = $this->login($identification, $password, $remember_me, false);
       if($login === false){
         /**
@@ -1073,7 +1079,7 @@ class LS {
             $sql = $this->dbh->prepare("UPDATE ". $this->config['two_step_login']['devices_table'] ." SET last_access = NOW() WHERE uid = ? AND token = ?");
             $sql->execute(array($uid, $_COOKIE[$this->config["cookies"]["names"]["device"]]));
 
-            $this->login($this->getUser("username", $uid), "", $remember_me);
+            $this->login($this->getUser("username", $uid), false, $remember_me);
             return true;
           }
         }

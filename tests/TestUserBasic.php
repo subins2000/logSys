@@ -56,6 +56,14 @@ class TestUserBasic extends PHPUnit_Framework_TestCase {
     $this->assertEquals($info["created"], $r["created"]);
   }
 
+  public function testUserLogin(){
+    // Login with password
+    $this->assertNotEquals(false, $this->LS->login("test", "abc", false, false));
+
+    // Login without password and get user ID
+    $this->assertEquals("1", $this->LS->login("test", false, false, false));
+  }
+
   public function testUserInfo(){
     $user = $this->LS->getUser("*", 1);
 
