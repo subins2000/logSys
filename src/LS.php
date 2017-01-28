@@ -22,7 +22,7 @@ namespace Fr;
 /**
 .---------------------------------------------------------------------------.
 |  Software:      PHP Login System - PHP logSys                             |
-|  Version:       0.7.1 (Last Updated on 2017 January 24)                   |
+|  Version:       0.8 (Last Updated on 2017 January 29)                     |
 |  Documentation: http://subinsb.com/php-logsys                             |
 |  Contribute:    https://github.com/subins2000/logSys                      |
 '---------------------------------------------------------------------------'
@@ -53,7 +53,7 @@ class LS {
      */
     "db" => array(
       /**
-       * @var string "mysql" or "sqlite"
+       * @var string "mysql" or "postgresql" or "sqlite"
        */
       "type" => "mysql",
 
@@ -532,6 +532,7 @@ class LS {
 
   /**
    * A function that will automatically redirect user according to his/her login status
+   * @return void
    */
   public function init() {
     if(in_array(self::curPage(), $this->config['pages']['everyone'])){
@@ -679,11 +680,14 @@ class LS {
   }
 
   /**
-   * A function to register a user with passing the username, password
-   * and optionally any other additional fields.
+   * Register a user
+   * @param  string         $identification Username or email
+   * @param  string         $password       Password
+   * @param  array          $other          Values for other columns
+   * @return boolean|string                 Whether user exists (exists) or account was created
    */
-  public function register( $id, $password, $other = array() ){
-    if( $this->userExists($id) || (isset($other['email']) && $this->userExists($other['email'])) ){
+  public function register( $identification, $password, $other = array() ){
+    if( $this->userExists($identification) || (isset($other['email']) && $this->userExists($other['email'])) ){
       return "exists";
     }else{
       $hashedPass = password_hash($password. $this->config['keys']['salt'], PASSWORD_DEFAULT);
@@ -703,7 +707,7 @@ class LS {
         }
       }
       /* Bind the default values */
-      $sql->bindValue(":username", $id);
+      $sql->bindValue(":username", $identification);
       $sql->bindValue(":password", $hashedPass);
       $sql->execute();
       return true;
@@ -711,7 +715,7 @@ class LS {
   }
 
   /**
-   * Logout the current logged in user by deleting the cookies and destroying session
+   * Logout the user by destroying the cookies and session
    */
   public function logout(){
     session_destroy();
@@ -728,8 +732,7 @@ class LS {
 
   /**
    * A function to handle the Forgot Password process
-   * Note: Forgot Password = Reset Password.
-   * logSys considers the both as same
+   * @return string The current state of the process
    */
   public function forgotPassword(){
     $curStatus = "initial";  // The Current Status of Forgot Password process
@@ -868,8 +871,9 @@ class LS {
   }
 
   /**
-   * Check if user exists with ther username/email given
-   * $identification - Either email/username
+   * Check if user exists
+   * @param  string  $identification Username or email
+   * @return boolean                 Whether user exist
    */
   public function userExists($identification){
     if($this->config['features']['email_login'] === true){
@@ -885,8 +889,10 @@ class LS {
   }
 
   /**
-   * Fetches data of user in database. Returns a single value or an
-   * array of value according to parameteres given to the function
+   * Get user's info
+   * @param  string       $what Column name
+   * @param  string       $user User ID
+   * @return array|string Value
    */
   public function getUser($what = "*", $user = null){
     if($user === null){
@@ -911,7 +917,10 @@ class LS {
   }
 
   /**
-   * Updates the info of user in DB
+   * Updates the info of user
+   * @param  array  $toUpdate Fields to update
+   * @param  [type] $user     User ID
+   * @return boolean          Whether it was a success
    */
   public function updateUser($toUpdate = array(), $user = null){
     if( is_array($toUpdate) && !isset($toUpdate['id']) ){
@@ -933,14 +942,16 @@ class LS {
         $sql->bindValue(":$key", $value);
       }
       $sql->execute();
-
+      return true;
     }else{
       return false;
     }
   }
 
   /**
-   * Returns a string which shows the time since the user has joined
+   * Get the time since user joined
+   * @param  string $user User ID
+   * @return string       Time since
    */
   public function joinedSince($user = null){
     if($user === null){
@@ -1131,8 +1142,8 @@ class LS {
   }
 
   /**
-   * Returns array of devices that are authorized
-   * to login by user's account credentials
+   * Get authorized devices
+   * @return array Authorized devices
    */
   public function getDevices(){
     if($this->loggedIn){
@@ -1146,6 +1157,8 @@ class LS {
 
   /**
    * Revoke a device
+   * @param  string  $device_token Device ID
+   * @return boolean               Whether it was revoked
    */
   public function revokeDevice($device_token){
     if($this->loggedIn){
@@ -1193,6 +1206,8 @@ class LS {
 
   /**
    * Check if E-Mail is valid
+   * @param  string $email Email
+   * @return boolean
    */
   public static function validEmail($email = ""){
     return filter_var($email, FILTER_VALIDATE_EMAIL);
@@ -1200,6 +1215,7 @@ class LS {
 
   /**
    * Get the current page URL
+   * @return string URL
    */
   public static function curPageURL() {
     $pageURL = 'http';
@@ -1215,7 +1231,9 @@ class LS {
 
   /**
    * Generate a Random String
-   * $int - Whether numeric string should be output
+   * @param  int     $length Length of string
+   * @param  boolean $int    Should string be integer
+   * @return string          Random string
    */
   public static function rand_string($length, $int = false) {
     $random_str = "";
@@ -1229,7 +1247,7 @@ class LS {
 
   /**
    * Get the current page path.
-   * Eg: /mypage, /folder/mypage.php
+   * @return string Example: /mypage, /folder/mypage.php
    */
   public static function curPage(){
     $parts = parse_url(self::curPageURL());
@@ -1238,6 +1256,9 @@ class LS {
 
   /**
    * Do a redirect
+   * @param  [type]  $url    Where to redirect to
+   * @param  integer $status Redirect status code
+   * @return void
    */
   public static function redirect($url, $status = 302){
     header("Location: $url", true, $status);
@@ -1245,7 +1266,11 @@ class LS {
   }
 
   /**
-   * Any mails need to be sent by logSys goes to here
+   * Send an email
+   * @param  string $email   Recipient's email
+   * @param  string $subject Subject
+   * @param  string $body    Message
+   * @return void
    */
   public function sendMail($email, $subject, $body){
     /**
