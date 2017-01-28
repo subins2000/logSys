@@ -14,7 +14,7 @@ $config = array(
     "host" => "localhost",
     "port" => 3306,
     "username" => "root",
-    "password" => "backstreetboys",
+    "password" => "",
     "name" => "test",
     "table" => "users"
   ),
@@ -41,7 +41,7 @@ $config = array(
     "instruction" => "A token was sent to your E-Mail Address. Please see the mail in your inbox and paste the token found in the textbox below :",
     "send_callback" => function(&$LS, $userID, $token){
       $email = $LS->getUser("email", $userID);
-      $LS->sendMail($email, "Verify Yourself", "Someone tried to login to your account. If it was you, then use the following token to complete logging in : <blockquote>". $token ."</blockquote>If it was not you, then ignore this email and please consider to change your account's password.");
+      //$LS->sendMail($email, "Verify Yourself", "Someone tried to login to your account. If it was you, then use the following token to complete logging in : <blockquote>". $token ."</blockquote>If it was not you, then ignore this email and please consider to change your account's password.");
     }
   )
 );

@@ -10,7 +10,7 @@ $LS = new \Fr\LS(array(
     "host" => "localhost",
     "port" => 3306,
     "username" => "root",
-    "password" => "backstreetboys",
+    "password" => "",
     "name" => "test",
     "table" => "users"
   ),
