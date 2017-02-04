@@ -1,6 +1,4 @@
 <?php
-namespace Fr;
-
 /**
 .---------------------------------------------------------------------------.
 | The Francium Project                                                      |
@@ -27,6 +25,10 @@ namespace Fr;
 |  Contribute:    https://github.com/subins2000/logSys                      |
 '---------------------------------------------------------------------------'
 */
+
+namespace Fr;
+
+use Fr\LS\TwoStepLogin;
 
 class LS {
 
@@ -153,7 +155,12 @@ class LS {
        * incorrect login attempts. Use http://www.easysurf.cc/utime.htm#m60s
        * for converting minutes to seconds. Default : 5 minutes
        */
-      "time_limit" => 300
+      "time_limit" => 300,
+
+      /**
+       * Maximum bumber of tokens that can be generated
+       */
+      "max_tokens" => 5
     ),
 
     /**
@@ -241,6 +248,11 @@ class LS {
       'token_length' => 4,
 
       /**
+       * Maximum number of tries the user can make for entering token
+       */
+      'token_tries' => 3,
+
+      /**
        * Whether the token should be numeric only ?
        * Default Token : Alphabetic + Numeric mixed strings
        */
@@ -309,23 +321,6 @@ class LS {
         return "<h3>Error : User Not Found</h3>";
       else if($state === "notLoggedIn")
         return "<h3>Error : Not Logged In</h3>";
-      else if($state === "twoStepLoginVerifyForm")
-        return "<form action='". self::curPageURL() ."' method='POST'>
-          <p>". $LS->config['two_step_login']['instruction'] ."</p>
-          <label>
-            <p>Token Received</p>
-            <input type='text' name='logSys_two_step_login-token' placeholder='Paste the token here... (case sensitive)' />
-          </label>
-          <label style='display: block;'>
-            <span>Remember this device ?</span>
-            <input type='checkbox' name='logSys_two_step_login-dontask' />
-          </label>
-          <input type='hidden' name='logSys_two_step_login-uid' value='". $extraInfo["uid"] ."' />
-          ". ($extraInfo["remember_me"] === true ? "<input type='hidden' name='logSys_two_step_login-remember_me' />" : "") ."
-          <label>
-            <button>Verify</button>
-          </label>
-        </form>";
       else if($state === "resetPasswordRequestForm")
         return "<form action='". self::curPageURL() ."' method='POST'>
           <label>
@@ -428,7 +423,8 @@ class LS {
           $this->config["db"]["password"],
           array(
             \PDO::ATTR_PERSISTENT => true,
-            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_STRINGIFY_FETCHES => true,
           )
         );
 
@@ -444,7 +440,8 @@ class LS {
           $this->config['db']['password'],
           array(
             \PDO::ATTR_PERSISTENT => true,
-            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_STRINGIFY_FETCHES => true,
           )
         );
 
@@ -455,7 +452,8 @@ class LS {
           $this->config['db']['password'],
           array(
             \PDO::ATTR_PERSISTENT => true,
-            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_STRINGIFY_FETCHES => true,
         ));
 
       }
@@ -761,7 +759,7 @@ class LS {
       $sql = $this->dbh->prepare("SELECT COUNT(1) FROM ". $this->config['db']['token_table'] ." WHERE token = ?");
       $sql->execute(array($reset_pass_token));
 
-      if($sql->fetchColumn() == 0 || $reset_pass_token == ""){
+      if($sql->fetchColumn() === '0' || $reset_pass_token == ""){
         $curStatus = "invalidToken"; // The token user gave was not valid
         echo $this->getOutput($curStatus);
       }else{
@@ -891,7 +889,7 @@ class LS {
     $sql->execute(array(
       ":login" => $identification
     ));
-    return $sql->fetchColumn() == "0" ? false : true;
+    return $sql->fetchColumn() === "0" ? false : true;
   }
 
   /**
@@ -1020,34 +1018,47 @@ class LS {
    * @return boolean|string                 Whether login was successful
    *                                        Current state of 2 Step Login
    */
-  public function twoStepLogin($identification = "", $password = "", $remember_me = false){
-    if(isset($_POST['logSys_two_step_login-token']) && isset($_POST['logSys_two_step_login-uid']) && $_SESSION['logSys_two_step_login-first_step'] === '1'){
+  public function twoStepLogin($identification = "", $password = "", $remember_me = false, $cookies = true){
+    if(isset($_POST['two_step_login_token']) && isset($_POST['two_step_login_uid']) && $_SESSION['two_step_login_first_step'] === '1'){
+
+      if( ! $this->csrf() ){
+        throw new TwoStepLogin( "invalid_csrf_token" );
+        return;
+      }
+
       /**
        * The user's ID and token is got through the form
        * User = One who is about to log in and is stuck at 2 step verification
        */
-      $uid = $_POST['logSys_two_step_login-uid'];
-      $token = $_POST['logSys_two_step_login-token'];
+      $uid = $_POST['two_step_login_uid'];
+      $token = $_POST['two_step_login_token'];
 
       $sql = $this->dbh->prepare("SELECT COUNT(1) FROM ". $this->config['db']['token_table'] ." WHERE token = ? AND uid = ?");
       $sql->execute(array($token, $uid));
 
-      if($sql->fetchColumn() == 0){
-        /**
-         * To prevent user from Brute Forcing the token, we set the
-         * status of the first login step to false,
-         * so that the user would have to login again
-         */
-        $_SESSION['logSys_two_step_login-first_step'] = '0';
-        echo $this->getOutput("invalidToken");
-        return "invalidToken";
+      if ( $sql->fetchColumn() === "0" ) {
+        if ( ( $_SESSION['two_step_login_token_tries'] + 1 ) >= $this->config['two_step_login']['token_tries'] ){
+          /**
+           * Prevent user from brute forcing the token
+           */
+          $this->logout();
+        } else {
+          $_SESSION['two_step_login_token_tries']++;
+        }
+
+        throw new TwoStepLogin(
+          "invalid_token",
+          array(
+            "tries_left" => $this->config['two_step_login']['token_tries'] - $_SESSION['two_step_login_token_tries']
+          )
+        );
       }else{
         /**
          * Register User's new device if and only if
          * the user wants to remember the device from
          * which the user is logging in
          */
-        if(isset($_POST['logSys_two_step_login-dontask'])){
+        if(isset($_POST['two_step_login_remember_device'])){
           $device_token = self::rand_string(10);
           $sql = $this->dbh->prepare("INSERT INTO ". $this->config['two_step_login']['devices_table'] ." (uid, token, last_access) VALUES (?, ?, NOW())");
           $sql->execute(array($uid, $device_token));
@@ -1060,21 +1071,24 @@ class LS {
         }
 
         /**
-         * Revoke token from reusing
+         * Revoke all tokens of user
          */
-        $sql = $this->dbh->prepare("DELETE FROM ". $this->config['db']['token_table'] ." WHERE token = ? AND uid = ?");
-        $sql->execute(array($token, $uid));
-        $this->login($this->getUser("username", $uid), false, isset($_POST['logSys_two_step_login-remember_me']));
+        $sql = $this->dbh->prepare("DELETE FROM ". $this->config['db']['token_table'] ." WHERE uid = ?");
+        $sql->execute(array($uid));
+
+        $this->login($this->getUser("username", $uid), false, isset($_POST['two_step_login_remember_me']));
+
+        throw new TwoStepLogin( "login_success" );
       }
-      return true;
     }else if($identification !== "" && $password !== ""){
       $login = $this->login($identification, $password, $remember_me, false);
       if($login === false){
         /**
          * Username/Password wrong
          */
-        return false;
+        throw new TwoStepLogin( "login_fail" );
       }else if(is_array($login) && $login['status'] == "blocked"){
+        throw new TwoStepLogin( "blocked", $login );
         return $login;
       }else{
         /**
@@ -1088,7 +1102,7 @@ class LS {
         if(isset($_COOKIE[$this->config["cookies"]["names"]["device"]])){
           $sql = $this->dbh->prepare("SELECT 1 FROM ". $this->config['two_step_login']['devices_table'] ." WHERE uid = ? AND token = ?");
           $sql->execute(array($uid, $_COOKIE[$this->config["cookies"]["names"]["device"]]));
-          if($sql->fetchColumn() == "1"){
+          if($sql->fetchColumn() === "1"){
             $verfied = true;
             /**
              * Update last accessed time
@@ -1096,8 +1110,15 @@ class LS {
             $sql = $this->dbh->prepare("UPDATE ". $this->config['two_step_login']['devices_table'] ." SET last_access = NOW() WHERE uid = ? AND token = ?");
             $sql->execute(array($uid, $_COOKIE[$this->config["cookies"]["names"]["device"]]));
 
+            /**
+             * Delete all session vars used for 2 Step Login
+             */
+            unset( $_SESSION['two_step_login_token_first_step'] );
+            unset( $_SESSION['two_step_login_token_tries'] );
+
             $this->login($this->getUser("username", $uid), false, $remember_me);
-            return true;
+
+            throw new TwoStepLogin( "login_success" );
           }
         }
         /**
@@ -1109,7 +1130,37 @@ class LS {
           /**
            * The first part of 2 Step Login is completed
            */
-          $_SESSION['logSys_two_step_login-first_step'] = '1';
+          $_SESSION['two_step_login_first_step'] = '1';
+          $_SESSION['two_step_login_token_tries'] = 0;
+
+          if ( $this->config['features']['block_brute_force'] ) {
+            $sth = $this->dbh->prepare( "SELECT COUNT(1) FROM ". $this->config['db']['token_table'] ." WHERE uid = ? " );
+            $sth->execute( array( $uid ) );
+
+            if ( $sth->fetchColumn() >= $this->config['brute_force']['max_tokens'] ) {
+              /**
+               * Account Blocked. User will be only able to
+               * re-login at the time in UNIX timestamp
+               */
+              $eligible_for_next_login_time = strtotime("+". $this->config['brute_force']['time_limit'] ." seconds", time());
+
+              $this->updateUser(array(
+                "attempt" => "b-" . $eligible_for_next_login_time
+              ), $uid);
+
+              /**
+               * Delete all 5 tokens
+               */
+              $sth = $this->dbh->prepare( 'DELETE FROM ' . $this->config['db']['token_table'] . ' WHERE uid = :uid LIMIT :max_tokens' );
+              $sth->bindValue( ':uid', $uid );
+              $sth->bindValue( ':max_tokens', $this->config['brute_force']['max_tokens'], \PDO::PARAM_INT );
+              $sth->execute();
+
+              $_SESSION['two_step_login_first_step'] = '0';
+
+              $this->logout();
+            }
+          }
 
           /**
            * The 2nd parameter depends on `config` -> `two_step_login` -> `numeric`
@@ -1125,14 +1176,10 @@ class LS {
           $that = $this;
           call_user_func_array($this->config['two_step_login']['send_callback'], array(&$that, $uid, $token));
 
-          /**
-           * Display the form
-           */
-          echo $this->getOutput("twoStepLoginVerifyForm", array(
+          throw new LS\TwoStepLogin( "enter_token_form", array(
             "remember_me" => $remember_me,
             "uid" => $uid
-          ));
-          return "formDisplay";
+          ) );
         }else{
           self::log("two_step_login: Token Callback not present");
         }
@@ -1163,16 +1210,21 @@ class LS {
 
   /**
    * Revoke a device
-   * @param  string  $device_token Device ID
+   * @param  string  $device_id Device ID
    * @return boolean               Whether it was revoked
    */
-  public function revokeDevice($device_token){
+  public function revokeDevice($device_id){
     if($this->loggedIn){
       $sql = $this->dbh->prepare("DELETE FROM ". $this->config['two_step_login']['devices_table'] ." WHERE uid = ? AND token = ?");
-      $sql->execute(array($this->userID, $device_token));
+      $sql->execute(array($this->userID, $device_id));
       if(isset($_SESSION[ $this->config['cookies']['names']['device_verified'] ])){
         unset($_SESSION[ $this->config['cookies']['names']['device_verified'] ]);
       }
+
+      if ( $this->getDeviceID() === $device_id ) {
+        $this->logout();
+      }
+
       return $sql->rowCount() == 1;
     }
   }
@@ -1202,6 +1254,18 @@ class LS {
    */
   public function isLoggedIn(){
     return $this->loggedIn;
+  }
+
+  /**
+   * Get device ID
+   * @return boolean|string FALSE if device cookie does not exist
+   */
+  public function getDeviceID() {
+    if ( isset( $_COOKIE[ $this->config['cookies']['names']['device'] ] ) ) {
+      return $_COOKIE[ $this->config['cookies']['names']['device'] ];
+    } else {
+      return false;
+    }
   }
 
   /**
@@ -1319,7 +1383,7 @@ class LS {
       /**
        * Output as an input field
        */
-      echo "<input type='hidden' name='csrf_token' value='{$csrf_token}' />";
+      return "<input type='hidden' name='csrf_token' value='{$csrf_token}' />";
     }else{
       /**
        * Check CSRF validity
