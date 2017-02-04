@@ -19,14 +19,14 @@ $LS = new \Fr\LS(array(
   ),
   "pages" => array(
     "no_login" => array(
-      "/Francium/logSys/",
-      "/Francium/logSys/examples/basic/reset.php",
-      "/Francium/logSys/examples/basic/register.php"
+      "/",
+      "/examples/basic/reset.php",
+      "/examples/basic/register.php"
     ),
     "everyone" => array(
-      "/Francium/logSys/examples/two-step-login/status.php"
+      "/examples/two-step-login/status.php"
     ),
-    "login_page" => "/Francium/logSys/examples/basic/login.php",
-    "home_page" => "/Francium/logSys/examples/basic/home.php"
+    "login_page" => "/examples/basic/login.php",
+    "home_page" => "/examples/basic/home.php"
   )
 ));
