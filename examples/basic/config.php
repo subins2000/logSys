@@ -24,7 +24,7 @@ $LS = new \Fr\LS(array(
       "/examples/basic/register.php"
     ),
     "everyone" => array(
-      "/examples/two-step-login/status.php"
+      "/examples/basic/status.php"
     ),
     "login_page" => "/examples/basic/login.php",
     "home_page" => "/examples/basic/home.php"
