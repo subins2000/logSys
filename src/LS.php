@@ -401,6 +401,11 @@ class LS {
   private $dbh;
 
   /**
+   * @var boolean Whether Fr\LS::init() was called
+   */
+  private $initCalled = false;
+
+  /**
    * Intialize
    * @param array $config Configuration
    */
@@ -545,7 +550,7 @@ class LS {
     }else if($this->loggedIn === false && array_search(self::curPage(), $this->config['pages']['no_login']) === false){
       self::redirect($this->config['pages']['login_page']);
     }
-    $this->init_called = true;
+    $this->initCalled = true;
   }
 
   /**
@@ -627,7 +632,7 @@ class LS {
           }
 
           // Redirect
-          if($this->init_called){
+          if($this->initCalled){
             self::redirect($this->config['pages']['home_page']);
           }
           return true;
