@@ -22,7 +22,7 @@ namespace Fr;
 /**
 .---------------------------------------------------------------------------.
 |  Software:      PHP Login System - PHP logSys                             |
-|  Version:       0.8.1                                                     |
+|  Version:       0.8.2                                                     |
 |  Documentation: http://subinsb.com/php-logsys                             |
 |  Contribute:    https://github.com/subins2000/logSys                      |
 '---------------------------------------------------------------------------'
@@ -210,6 +210,7 @@ class LS {
          * This is used as $_SESSION key
          */
         "current_user" => "cu",
+        "device_verified" => "dvv"
       ),
     ),
 
@@ -459,14 +460,14 @@ class LS {
 
       }
 
-      $cookieToken = isset($_COOKIE['lg']) ? $_COOKIE['lg'] : false;
+      $cookieToken = isset($_COOKIE[$this->config['cookies']['names']['login_token']]) ? $_COOKIE[ $this->config['cookies']['names']['login_token'] ] : false;
 
       /**
        * @var int|boolean User ID is stored in session
        */
-      $sessionUID = isset($_SESSION['cu']) ? $_SESSION['cu'] : false;
+      $sessionUID = isset( $_SESSION[ $this->config['cookies']['names']['current_user'] ] ) ? $_SESSION[ $this->config['cookies']['names']['current_user'] ] : false;
 
-      $rememberMe = isset($_COOKIE['rm']) ? $_COOKIE['rm'] : false;
+      $rememberMe = isset( $_COOKIE[ $this->config['cookies']['names']['remember_me'] ] ) ? $_COOKIE[ $this->config['cookies']['names']['remember_me'] ] : false;
 
       if($cookieToken) {
         $loginToken = hash("sha256", $this->config['keys']['cookie'] . $sessionUID . $this->config['keys']['cookie']);
@@ -498,12 +499,12 @@ class LS {
       if($this->config['features']['two_step_login'] === true && $this->loggedIn){
         $login_page = self::curPage() === $this->config['pages']['login_page'];
 
-        if(!isset($_SESSION['device_check']) && !isset($_COOKIE[$this->config["cookies"]["names"]["device"]]) && $login_page === false){
+        if(!isset($_SESSION[ $this->config['cookies']['names']['device_verified'] ]) && !isset($_COOKIE[$this->config["cookies"]["names"]["device"]]) && $login_page === false){
           /**
            * The device cookie is not even set. So, logout
            */
           $this->logout();
-        }else if($this->config['two_step_login']['first_check_only'] === false || ($this->config['two_step_login']['first_check_only'] === true && !isset($_SESSION['device_check']))){
+        }else if($this->config['two_step_login']['first_check_only'] === false || ($this->config['two_step_login']['first_check_only'] === true && !isset($_SESSION[ $this->config['cookies']['names']['device_verified'] ]))){
           $sql = $this->dbh->prepare("SELECT '1' FROM ". $this->config['two_step_login']['devices_table'] ." WHERE uid = ? AND token = ?");
           $sql->execute(array($this->userID, $_COOKIE[$this->config["cookies"]["names"]["device"]]));
 
@@ -517,7 +518,7 @@ class LS {
             /**
              * This session has been checked and verified
              */
-            $_SESSION['device_check'] = 1;
+            $_SESSION[ $this->config['cookies']['names']['device_verified'] ] = 1;
           }
         }
       }
@@ -1055,7 +1056,7 @@ class LS {
           /**
            * Verify login for this session
            */
-          $_SESSION["device_check"] = "1";
+          $_SESSION[ $this->config['cookies']['names']['device_verified'] ] = '1';
         }
 
         /**
@@ -1169,8 +1170,8 @@ class LS {
     if($this->loggedIn){
       $sql = $this->dbh->prepare("DELETE FROM ". $this->config['two_step_login']['devices_table'] ." WHERE uid = ? AND token = ?");
       $sql->execute(array($this->userID, $device_token));
-      if(isset($_SESSION['device_check'])){
-        unset($_SESSION['device_check']);
+      if(isset($_SESSION[ $this->config['cookies']['names']['device_verified'] ])){
+        unset($_SESSION[ $this->config['cookies']['names']['device_verified'] ]);
       }
       return $sql->rowCount() == 1;
     }
