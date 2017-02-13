@@ -4,6 +4,18 @@
 
 Each version section also has instructions on how to modify your existing logSys calls to work on the new version.
 
+## 0.9
+
+* 2 Step Login
+    * 2 Step Login process is done now with exceptions
+    * Added `Fr\LS\TwoStepLogin` exception class
+    * Added try limit for entering token. For this `config` -> `two_step_login` -> `token_tries` has been added. Default : 3
+    * Revoking the device which is used by user will force a logout
+* Requesting tokens more than **5** times will cause account to be blocked
+  This can be changed with `config` -> `brute_force` -> `max_tokens`
+* Added `Fr\LS::getDeviceID()`
+* All result from database is regarded [as strings or null](https://phpdelusions.net/pdo#returntypes)
+
 ## 0.8
 
 * logSys is now an object class. Static methods has been replaced
