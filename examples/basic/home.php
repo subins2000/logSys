@@ -32,8 +32,8 @@ if( isset($_POST['newName']) ){
 			<input name="newName" placeholder="New name" />
 			<button>Change Name</button>
 		</form>
-    <p>
-      <a href="change.php">Change Password</a>
-    </p>
+		<p>
+			<a href="change.php">Change Password</a>
+		</p>
 	</body>
 </html>

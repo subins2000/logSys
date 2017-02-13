@@ -1,26 +1,26 @@
 {
-  "name": "francium/logsys",
-  "type": "library",
-  "description": "PHP Secure, Advanced Login System",
-  "keywords": ["login","register", "secure"],
-  "homepage": "http://subinsb.com/php-logsys",
-  "license": "Apache 2.0",
-  "authors": [
-    {
-      "name": "Subin Siby",
-      "homepage": "http://subinsb.com",
-      "role": "Developer"
-    }
-  ],
-  "autoload": {
-    "psr-4": {
-      "Fr\\": "src/"
-    }
-  },
-  "require": {
-    "php": ">=5.5"
-  },
-  "require-dev": {
-    "phpunit": "*"
-  }
+	"name": "francium/logsys",
+	"type": "library",
+	"description": "PHP Secure, Advanced Login System",
+	"keywords": ["login","register", "secure"],
+	"homepage": "http://subinsb.com/php-logsys",
+	"license": "Apache 2.0",
+	"authors": [
+		{
+			"name": "Subin Siby",
+			"homepage": "http://subinsb.com",
+			"role": "Developer"
+		}
+	],
+	"autoload": {
+		"psr-4": {
+			"Fr\\": "src/"
+		}
+	},
+	"require": {
+		"php": ">=5.5"
+	},
+	"require-dev": {
+		"phpunit": "*"
+	}
 }

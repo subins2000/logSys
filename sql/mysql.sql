@@ -31,9 +31,9 @@ CREATE TABLE IF NOT EXISTS `user_tokens` (
 --
 
 CREATE TABLE IF NOT EXISTS `user_devices` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `uid` int(11) NOT NULL COMMENT 'The user''s ID',
-  `token` varchar(15) NOT NULL COMMENT 'A unique token for the user''s device',
-  `last_access` varchar(20) NOT NULL,
-  PRIMARY KEY (`id`)
+	`id` int(11) NOT NULL AUTO_INCREMENT,
+	`uid` int(11) NOT NULL COMMENT 'The user''s ID',
+	`token` varchar(15) NOT NULL COMMENT 'A unique token for the user''s device',
+	`last_access` varchar(20) NOT NULL,
+	PRIMARY KEY (`id`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;

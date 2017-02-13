@@ -6,10 +6,10 @@ require "config.php";
 	<head></head>
 	<body>
  		<?php
-    if(Fr\LS->isLoggedIn())
-      echo "You are logged in. <a href='home.php'>Home</a>";
-    else
-      echo "You are not logged in. <a href='login.php'>Log In</a>";
-    ?>
+		if(Fr\LS->isLoggedIn())
+			echo "You are logged in. <a href='home.php'>Home</a>";
+		else
+			echo "You are not logged in. <a href='login.php'>Log In</a>";
+		?>
 	</body>
 </html>
