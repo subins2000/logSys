@@ -756,10 +756,8 @@ class LS {
 			 * The user gave the password reset token. Check if the token is valid.
 			 */
 			$reset_pass_token = urldecode($_GET['resetPassToken']);
-			$sql = $this->dbh->prepare("SELECT COUNT(1) FROM ". $this->config['db']['token_table'] ." WHERE token = ?");
-			$sql->execute(array($reset_pass_token));
 
-			if($sql->fetchColumn() === '0' || $reset_pass_token == ""){
+			if ( ! $this->verifyResetPasswordToken( $reset_pass_token ) ) {
 				$curStatus = "invalidToken"; // The token user gave was not valid
 				echo $this->getOutput($curStatus);
 			}else{
@@ -816,7 +814,7 @@ class LS {
 					"identity_type" => $identName
 				));
 			}else{
-				$sql = $this->dbh->prepare("SELECT ". $this->config["db"]["columns"]["email"] .", ". $this->config["db"]["columns"]["id"] ." FROM ". $this->config['db']['table'] ." WHERE ". $this->config["db"]["columns"]["username"] ."=:login OR ". $this->config["db"]["columns"]["email"] ."=:login");
+				$sql = $this->dbh->prepare("SELECT ". $this->config["db"]["columns"]["id"] ." FROM ". $this->config['db']['table'] ." WHERE ". $this->config["db"]["columns"]["username"] ."=:login OR ". $this->config["db"]["columns"]["email"] ."=:login");
 				$sql->bindValue(":login", $identification);
 
 				$sql->execute();
@@ -826,33 +824,63 @@ class LS {
 					$curStatus = "userNotFound"; // The user with the identity given was not found in the users database
 					echo $this->getOutput($curStatus);
 				}else{
-					$email = $cols['email'];
-					$uid   = $cols['id'];
-
-					/**
-					 * Make token and insert into the table
-					 */
-					$token = self::rand_string(40);
-					$sql = $this->dbh->prepare("INSERT INTO ". $this->config['db']['token_table'] ." (token, uid, requested) VALUES (?, ?, UNIX_TIMESTAMP())");
-					$sql->execute(array($token, $uid));
-					$encodedToken = urlencode($token);
-
-					/**
-					 * Prepare the email to be sent
-					 */
-					$subject = "Reset Password";
-					$body   = "You requested for resetting your password on ". $this->config['basic']['company'] .". For this, please click the following link :
-					<blockquote>
-						<a href='". self::curPageURL() ."?resetPassToken={$encodedToken}'>Reset Password : {$token}</a>
-					</blockquote>";
-					$this->sendMail($email, $subject, $body);
+					$this->sendResetPasswordToken($cols['id']);
 
 					echo "<p>An email has been sent to your email inbox with instructions. Check Your Mail Inbox and SPAM Folders.</p><p>You can close this window.</p>";
+
 					$curStatus = "emailSent"; // E-Mail has been sent
 				}
 			}
 		}
 		return $curStatus;
+	}
+
+	/**
+	 * Send token to reset password
+	 * @param  int              $uid             User ID
+	 * @param  boolean|function $messageCallback Callback to make the body of email
+	 * @return boolean
+	 */
+	public function sendResetPasswordToken( $uid, $messageCallback = false ) {
+		$token = self::rand_string(40);
+		$encodedToken = urlencode($token);
+		$email = $this->getUser( $this->config['db']['columns']['email'], $uid );
+
+		if ( !$email ){
+			return false;
+		}
+
+		$sql = $this->dbh->prepare("INSERT INTO ". $this->config['db']['token_table'] ." (token, uid, requested) VALUES (?, ?, UNIX_TIMESTAMP())");
+		$sql->execute(array($token, $uid));
+
+		/**
+		 * Prepare the email to be sent
+		 */
+		$subject = "Reset Password";
+
+		if ( is_callable( $messageCallback ) ) {
+			$body = call_user_func_array( $messageCallback, $encodedToken, self::curPageURL() );
+		} else {
+			$body   = "You requested for resetting your password on ". $this->config['basic']['company'] .". For this, please click the following link :
+			<blockquote>
+				<a href='". self::curPageURL() ."?resetPassToken={$encodedToken}'>Reset Password : {$token}</a>
+			</blockquote>";
+		}
+
+		$this->sendMail($email, $subject, $body);
+
+		return true;
+	}
+
+	/**
+	 * Check if token for resetting password is valid
+	 * @return boolean
+	 */
+	public function verifyResetPasswordToken( $reset_pass_token ) {
+		$sql = $this->dbh->prepare("SELECT COUNT(1) FROM ". $this->config['db']['token_table'] ." WHERE token = ?");
+		$sql->execute(array($reset_pass_token));
+
+		return $sql->fetchColumn() !== '0';
 	}
 
 	/**
