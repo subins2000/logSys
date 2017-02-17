@@ -859,7 +859,13 @@ class LS {
 		$subject = "Reset Password";
 
 		if ( is_callable( $messageCallback ) ) {
-			$body = call_user_func_array( $messageCallback, $encodedToken, self::curPageURL() );
+			$body = call_user_func_array(
+				$messageCallback,
+				array(
+					$encodedToken,
+					self::curPageURL()
+				)
+			);
 		} else {
 			$body   = "You requested for resetting your password on ". $this->config['basic']['company'] .". For this, please click the following link :
 			<blockquote>
@@ -1204,7 +1210,7 @@ class LS {
 					$that = $this;
 					call_user_func_array($this->config['two_step_login']['send_callback'], array(&$that, $uid, $token));
 
-					throw new LS\TwoStepLogin( "enter_token_form", array(
+					throw new TwoStepLogin( "enter_token_form", array(
 						"remember_me" => $remember_me,
 						"uid" => $uid
 					) );
