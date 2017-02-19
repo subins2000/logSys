@@ -96,8 +96,4 @@ class TestUserBasic extends PHPUnit_Framework_TestCase {
 		$this->assertNotEquals(false, $this->LS->login("test", "xyz", false, false));
 	}
 
-	public static function tearDownAfterClass(){
-		self::$pdo->exec("DROP TABLE users;DROP TABLE user_devices;DROP TABLE user_tokens;");
-	}
-
 }

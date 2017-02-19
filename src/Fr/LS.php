@@ -1053,18 +1053,14 @@ class LS {
 	 *                                        Current state of 2 Step Login
 	 */
 	public function twoStepLogin($identification = "", $password = "", $remember_me = false, $cookies = true){
-		if(isset($_POST['two_step_login_token']) && isset($_POST['two_step_login_uid']) && $_SESSION['two_step_login_first_step'] === '1'){
+		if( isset( $_POST['two_step_login_token'] ) && isset( $_SESSION['two_step_login_first_step'] ) && isset( $_SESSION['two_step_login_uid'] ) && $_SESSION['two_step_login_first_step'] === '1' ){
 
 			if( ! $this->csrf() ){
 				throw new TwoStepLogin( "invalid_csrf_token" );
 				return;
 			}
 
-			/**
-			 * The user's ID and token is got through the form
-			 * User = One who is about to log in and is stuck at 2 step verification
-			 */
-			$uid = $_POST['two_step_login_uid'];
+			$uid 	 = $_SESSION['two_step_login_uid'];
 			$token = $_POST['two_step_login_token'];
 
 			$sql = $this->dbh->prepare("SELECT COUNT(1) FROM ". $this->config['db']['token_table'] ." WHERE token = ? AND uid = ?");
@@ -1110,9 +1106,16 @@ class LS {
 				$sql = $this->dbh->prepare("DELETE FROM ". $this->config['db']['token_table'] ." WHERE uid = ?");
 				$sql->execute(array($uid));
 
-				$this->login($this->getUser("username", $uid), false, isset($_POST['two_step_login_remember_me']));
+				if ( $cookies ){
+					$this->login( $this->getUser( 'username', $uid ), false, isset( $_POST['two_step_login_remember_me'] ) );
+				}
 
-				throw new TwoStepLogin( "login_success" );
+				throw new TwoStepLogin(
+					'login_success',
+					array(
+						'uid' => $uid
+					)
+				);
 			}
 		}else if($identification !== "" && $password !== ""){
 			$login = $this->login($identification, $password, $remember_me, false);
@@ -1149,10 +1152,18 @@ class LS {
 						 */
 						unset( $_SESSION['two_step_login_token_first_step'] );
 						unset( $_SESSION['two_step_login_token_tries'] );
+						unset( $_SESSION['two_step_login_uid'] );
 
-						$this->login($this->getUser("username", $uid), false, $remember_me);
+						if ( $cookies ){
+							$this->login( $this->getUser( 'username', $uid ), false, $remember_me );
+						}
 
-						throw new TwoStepLogin( "login_success" );
+						throw new TwoStepLogin(
+							'login_success',
+							array(
+								'uid' => $uid
+							)
+						);
 					}
 				}
 				/**
@@ -1166,6 +1177,7 @@ class LS {
 					 */
 					$_SESSION['two_step_login_first_step'] = '1';
 					$_SESSION['two_step_login_token_tries'] = 0;
+					$_SESSION['two_step_login_uid'] = $uid;
 
 					if ( $this->config['features']['block_brute_force'] ) {
 						$sth = $this->dbh->prepare( "SELECT COUNT(1) FROM ". $this->config['db']['token_table'] ." WHERE uid = ? " );
