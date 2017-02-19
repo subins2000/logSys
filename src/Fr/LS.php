@@ -850,8 +850,14 @@ class LS {
 			return false;
 		}
 
-		$sql = $this->dbh->prepare("INSERT INTO ". $this->config['db']['token_table'] ." (token, uid, requested) VALUES (?, ?, UNIX_TIMESTAMP())");
-		$sql->execute(array($token, $uid));
+		$sth = $this->dbh->prepare('INSERT INTO ' . $this->config['db']['token_table'] . ' (token, uid, requested) VALUES (?, ?, ?)');
+		$sth->execute(
+			array(
+				$token,
+				$uid,
+				time(),
+			)
+		);
 
 		/**
 		 * Prepare the email to be sent
@@ -1090,9 +1096,11 @@ class LS {
 				 */
 				if(isset($_POST['two_step_login_remember_device'])){
 					$device_token = self::rand_string(10);
-					$sql = $this->dbh->prepare("INSERT INTO ". $this->config['two_step_login']['devices_table'] ." (uid, token, last_access) VALUES (?, ?, NOW())");
-					$sql->execute(array($uid, $device_token));
-					setcookie($this->config["cookies"]["names"]["device"], $device_token, strtotime($this->config['two_step_login']['expire']), $this->config['cookies']['path'], $this->config['cookies']['domain']);
+
+					$sth = $this->dbh->prepare( 'INSERT INTO ' . $this->config['two_step_login']['devices_table'] . ' ( uid, token, last_access ) VALUES ( ?, ?, ? )' );
+					$sth->execute( array( $uid, $device_token, time() ) );
+
+					setcookie($this->config['cookies']['names']['device'], $device_token, strtotime($this->config['two_step_login']['expire']), $this->config['cookies']['path'], $this->config['cookies']['domain']);
 				}else{
 					/**
 					 * Verify login for this session
@@ -1144,8 +1152,14 @@ class LS {
 						/**
 						 * Update last accessed time
 						 */
-						$sql = $this->dbh->prepare("UPDATE ". $this->config['two_step_login']['devices_table'] ." SET last_access = NOW() WHERE uid = ? AND token = ?");
-						$sql->execute(array($uid, $_COOKIE[$this->config["cookies"]["names"]["device"]]));
+						$sth = $this->dbh->prepare('UPDATE ' . $this->config['two_step_login']['devices_table'] . ' SET last_access = ? WHERE uid = ? AND token = ?');
+						$sth->execute(
+							array(
+								time(),
+								$uid,
+								$_COOKIE[ $this->config['cookies']['names']['device'] ]
+							)
+						);
 
 						/**
 						 * Delete all session vars used for 2 Step Login
@@ -1216,8 +1230,14 @@ class LS {
 					/**
 					 * Save the token in DB
 					 */
-					$sql = $this->dbh->prepare("INSERT INTO ". $this->config['db']['token_table'] ." (token, uid, requested) VALUES (?, ?, NOW())");
-					$sql->execute(array($token, $uid));
+					$sth = $this->dbh->prepare('INSERT INTO ' . $this->config['db']['token_table'] . ' (token, uid, requested) VALUES (?, ?, ?)');
+					$sth->execute(
+						array(
+							$token,
+							$uid,
+							time(),
+						)
+					);
 
 					$that = $this;
 					call_user_func_array($this->config['two_step_login']['send_callback'], array(&$that, $uid, $token));
