@@ -1,10 +1,10 @@
 <?php
-require "config.php";
-if( isset($_POST['newName']) ){
-	$_POST['newName'] = $_POST['newName'] == "" ? "Dude" : $_POST['newName'];
-	$LS->updateUser(array(
-		"name" => $_POST['newName']
-	));
+require 'config.php';
+if ( isset( $_POST['newName'] ) ) {
+	$_POST['newName'] = $_POST['newName'] == '' ? 'Dude' : $_POST['newName'];
+	$LS->updateUser( array(
+		'name' => $_POST['newName'],
+	) );
 }
 ?>
 <html>
@@ -21,10 +21,12 @@ if( isset($_POST['newName']) ){
 		<p>
 			Here is the full data, the database stores on this user :
 		</p>
-		<pre><?php
-			$details = $LS->getUser();
-			print_r($details);
-			?></pre>
+		<?php
+		$details = $LS->getUser();
+		echo '<pre>';
+		print_r( $details );
+		echo '</pre>';
+		?>
 		<p>
 			Change the name of your account :
 		</p>

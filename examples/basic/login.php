@@ -1,16 +1,16 @@
 <?php
-require "config.php";
-if(isset($_POST['action_login'])){
+require 'config.php';
+if ( isset( $_POST['action_login'] ) ) {
 	$identification = $_POST['login'];
-	$password = $_POST['password'];
-	if($identification == "" || $password == ""){
-		$msg = array("Error", "Username / Password Wrong !");
-	}else{
-		$login = $LS->login($identification, $password, isset($_POST['remember_me']));
-		if($login === false){
-			$msg = array("Error", "Username / Password Wrong !");
-		}else if(is_array($login) && $login['status'] == "blocked"){
-			$msg = array("Error", "Too many login attempts. You can attempt login after ". $login['minutes'] ." minutes (". $login['seconds'] ." seconds)");
+	$password       = $_POST['password'];
+	if ( $identification == '' || $password == '' ) {
+		$msg = array( 'Error', 'Username / Password Wrong !' );
+	} else {
+		$login = $LS->login( $identification, $password, isset( $_POST['remember_me'] ) );
+		if ( $login === false ) {
+			$msg = array( 'Error', 'Username / Password Wrong !' );
+		} else if ( is_array( $login ) && $login['status'] == 'blocked' ) {
+			$msg = array( 'Error', 'Too many login attempts. You can attempt login after ' . $login['minutes'] . ' minutes (' . $login['seconds'] . ' seconds)' );
 		}
 	}
 }
@@ -23,7 +23,7 @@ if(isset($_POST['action_login'])){
 		<div class="content">
 			<h2>Log In</h2>
 			<?php
-			if(isset($msg)){
+			if ( isset( $msg ) ) {
 				echo "<h2>{$msg[0]}</h2><p>{$msg[1]}</p>";
 			}
 			?>
