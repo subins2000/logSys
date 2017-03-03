@@ -1115,7 +1115,7 @@ HTML;
 			$userID = $this->userID;
 		}
 
-		$created    = $this->getUser( $this->config['db']['columns']['email'], $userID );
+		$created    = $this->getUser( $this->config['db']['columns']['created'], $userID );
 		$timeFirst  = strtotime( $created );
 		$timeSecond = strtotime( 'now' );
 		$memsince   = $timeSecond - strtotime( $created );
