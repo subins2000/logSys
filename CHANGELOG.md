@@ -14,6 +14,7 @@ Each version section also has instructions on how to modify your existing logSys
 * Requesting tokens more than **5** times will cause account to be blocked
 	This can be changed with `config` -> `brute_force` -> `max_tokens`
 * All result from database is regarded [as strings or null](https://phpdelusions.net/pdo#returntypes)
+* Fixed `Fr\LS::joinedSince()` bug
 * Added `Fr\LS::getDeviceID()`
 * Added `Fr\LS::userIDExists()`
 
