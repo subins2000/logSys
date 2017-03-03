@@ -877,8 +877,7 @@ HTML;
 					/**
 					 * The token shall not be used again, so remove it.
 					 */
-					$sql = $this->dbh->prepare( 'DELETE FROM ' . $this->config['db']['token_table'] . ' WHERE token = ?' );
-					$sql->execute( array( $reset_pass_token ) );
+					$this->removeToken( $reset_pass_token );
 
 					$curStatus = 'passwordChanged'; // The password was successfully changed
 					echo $this->getOutput( $curStatus );
@@ -929,9 +928,8 @@ HTML;
 	 * @return boolean
 	 */
 	public function sendResetPasswordToken( $uid, $messageCallback = false ) {
-		$token        = self::rand_string( 40 );
-		$encodedToken = urlencode( $token );
-		$email        = $this->getUser( $this->config['db']['columns']['email'], $uid );
+		$token = self::rand_string( 40 );
+		$email = $this->getUser( $this->config['db']['columns']['email'], $uid );
 
 		if ( ! $email ) {
 			return false;
@@ -955,14 +953,14 @@ HTML;
 			$body = call_user_func_array(
 				$messageCallback,
 				array(
-					$encodedToken,
+					$token,
 					self::curPageURL(),
 				)
 			);
 		} else {
 			$body = 'You requested for resetting your password on ' . $this->config['basic']['company'] . '. For this, please click the following link :
 			<blockquote>
-				<a href="' . self::curPageURL() . '?resetPassToken=' . $encodedToken . '">Reset Password : ' . $token . '</a>
+				<a href="' . self::curPageURL() . '?resetPassToken=' . urlencode( $token ) . '">Reset Password : ' . $token . '</a>
 			</blockquote>';
 		}
 
@@ -980,6 +978,18 @@ HTML;
 		$sql->execute( array( $reset_pass_token ) );
 
 		return $sql->fetchColumn() !== '0';
+	}
+
+	/**
+	 * Remove a token
+	 * @param  string  $token Token
+	 * @return boolean
+	 */
+	public function removeToken( $token ) {
+		$sql = $this->dbh->prepare( 'DELETE FROM ' . $this->config['db']['token_table'] . ' WHERE token = ?' );
+		$sql->execute( array( $token ) );
+
+		return $sql->rowCount() != 0;
 	}
 
 	/**
