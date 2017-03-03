@@ -83,6 +83,7 @@ class LS {
 				'password' => 'password',
 				'email'    => 'email',
 				'attempt'  => 'attempt',
+				'created'  => 'created',
 			),
 		),
 
@@ -1109,13 +1110,12 @@ HTML;
 	 * @param  string $user User ID
 	 * @return string       Time since
 	 */
-	public function joinedSince( $user = null ) {
-
-		if ( $user === null ) {
-			$user = $this->userID;
+	public function joinedSince( $userID = null ) {
+		if ( $userID === null ) {
+			$userID = $this->userID;
 		}
 
-		$created    = $this->getUser( 'created' );
+		$created    = $this->getUser( $this->config['db']['columns']['created'], $userID );
 		$timeFirst  = strtotime( $created );
 		$timeSecond = strtotime( 'now' );
 		$memsince   = $timeSecond - strtotime( $created );
