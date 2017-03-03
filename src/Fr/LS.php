@@ -1023,6 +1023,20 @@ HTML;
 	}
 
 	/**
+	 * Check if a user ID exists
+	 * @param  string $userID User ID
+	 * @return boolean
+	 */
+	public function userIDExists( $userID ) {
+		$sql = $this->dbh->prepare( 'SELECT COUNT(1) FROM ' . $this->config['db']['table'] . ' WHERE ' . $this->config['db']['columns']['id'] . ' = :login' );
+		$sql->execute( array(
+			':login' => $userID,
+		) );
+
+		return $sql->fetchColumn() !== '0';
+	}
+
+	/**
 	 * Get user's info
 	 * @param  string       $what Column name
 	 * @param  string       $user User ID
