@@ -17,6 +17,7 @@ Each version section also has instructions on how to modify your existing logSys
 * Fixed `Fr\LS::joinedSince()` bug
 * Added `Fr\LS::getDeviceID()`
 * Added `Fr\LS::userIDExists()`
+* Added `Fr\LS::removeToken()`
 
 ## 0.8
 

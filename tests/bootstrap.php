@@ -9,3 +9,9 @@ if ( $GLOBALS['DB_TYPE'] === 'sqlite' ) {
 } else {
 	$GLOBALS['DB_DSN'] = 'mysql:dbname=' . $GLOBALS['DB_NAME'] . ';host=' . $GLOBALS['DB_HOST'] . ';port=' . $GLOBALS['DB_PORT'];
 }
+
+function setServerArray() {
+	$_SERVER['SERVER_NAME'] = 'localhost';
+	$_SERVER['SERVER_PORT'] = '80';
+	$_SERVER['REQUEST_URI'] = '/index.php';
+}
