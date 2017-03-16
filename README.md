@@ -43,8 +43,14 @@ Versions & Upgrading
 
 See [CHANGELOG](https://github.com/subins2000/logSys/blob/master/CHANGELOG.md)
 
-Testing
-=======
+Contributing
+============
+
+* Follow [PSR standards](http://www.php-fig.org/psr)
+* Write or modify unit tests for changes you make (if applicable)
+* Run unit tests before pull request.
+
+## Testing
 
 Edit the database configuration inside the `tests/*.xml` files and run :
 
