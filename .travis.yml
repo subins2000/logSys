@@ -12,7 +12,10 @@ before_install:
   - mysql -e 'CREATE DATABASE IF NOT EXISTS tests;'
   - psql -c 'create database tests;' -U postgres
 
+before_script:
+  - composer update
+
 script:
-  - phpunit -c testing/phpunit.mysql.xml
-  - phpunit -c testing/phpunit.sqlite.xml
-  - phpunit -c testing/phpunit.postgresql.xml
+  - vendor/bin/phpunit -c testing/phpunit.mysql.xml
+  - vendor/bin/phpunit -c testing/phpunit.sqlite.xml
+  - vendor/bin/phpunit -c testing/phpunit.postgresql.xml

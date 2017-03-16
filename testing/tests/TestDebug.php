@@ -1,5 +1,5 @@
 <?php
-class TestDebug extends \PHPUnit\Framework\TestCase
+class TestDebug extends PHPUnit_Framework_TestCase
 {
     private static $pdo = null;
     private static $log_file;

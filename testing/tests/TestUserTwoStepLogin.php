@@ -3,7 +3,7 @@
 use Fr\LS;
 use Fr\LS\TwoStepLogin;
 
-class TestUserTwoStepLogin extends \PHPUnit\Framework\TestCase
+class TestUserTwoStepLogin extends PHPUnit_Framework_TestCase
 {
     private static $pdo = null;
 

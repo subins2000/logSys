@@ -2,7 +2,7 @@
 
 use Fr\LS;
 
-class TestUserBasic extends \PHPUnit\Framework\TestCase
+class TestUserBasic extends PHPUnit_Framework_TestCase
 {
     private static $pdo = null;
 

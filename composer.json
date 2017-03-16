@@ -21,6 +21,6 @@
 		"php": ">=5.5"
 	},
 	"require-dev": {
-		"phpunit": "*"
+		"phpunit/phpunit": "5.7.16"
 	}
 }

@@ -1,5 +1,5 @@
 <?php
-class TestDBSetup extends \PHPUnit\Framework\TestCase
+class TestDBSetup extends PHPUnit_Framework_TestCase
 {
     private $pdo = null;
 
