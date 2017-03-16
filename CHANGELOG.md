@@ -19,6 +19,7 @@ Each version section also has instructions on how to modify your existing logSys
 * Added `Fr\LS::userIDExists()`
 * Added `Fr\LS::removeToken()`
 * Follow PSR standards
+    * Changed `Fr\LS::rand_string()` to `Fr\LS::randStr()`
 
 ## 0.8
 

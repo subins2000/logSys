@@ -905,7 +905,7 @@ HTML;
      */
     public function sendResetPasswordToken($uid, $messageCallback = false)
     {
-        $token = self::randString(40);
+        $token = self::randStr(40);
         $email = $this->getUser($this->config['db']['columns']['email'], $uid);
 
         if (!$email) {
@@ -1200,7 +1200,7 @@ HTML;
                  */
 
                 if (isset($_POST['two_step_login_remember_device'])) {
-                    $device_token = self::randString(10);
+                    $device_token = self::randStr(10);
 
                     $sth = $this->dbh->prepare('INSERT INTO ' . $this->config['two_step_login']['devices_table'] . ' ( uid, token, last_access ) VALUES ( ?, ?, ? )');
                     $sth->execute(array($uid, $device_token, time()));
@@ -1336,7 +1336,7 @@ HTML;
                     /**
                      * The 2nd parameter depends on `config` -> `two_step_login` -> `numeric`
                      */
-                    $token = self::randString($this->config['two_step_login']['token_length'], $this->config['two_step_login']['numeric']);
+                    $token = self::randStr($this->config['two_step_login']['token_length'], $this->config['two_step_login']['numeric']);
 
                     /**
                      * Save the token in DB
@@ -1500,7 +1500,7 @@ HTML;
      * @param  boolean $int    Should string be integer
      * @return string          Random string
      */
-    public static function randString($length, $int = false)
+    public static function randStr($length, $int = false)
     {
         $random_str = '';
         $chars      = $int ? '0516243741506927589' : 'subinsblogabcdefghijklmanopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -1568,7 +1568,7 @@ HTML;
     public function csrf($type = '')
     {
         if (!isset($_COOKIE['csrf_token'])) {
-            $csrf_token = self::randString(5);
+            $csrf_token = self::randStr(5);
             setcookie('csrf_token', $csrf_token, 0, $this->config['cookies']['path'], $this->config['cookies']['domain']);
         } else {
             $csrf_token = $_COOKIE['csrf_token'];
