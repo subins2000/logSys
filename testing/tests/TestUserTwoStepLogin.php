@@ -3,7 +3,7 @@
 use Fr\LS;
 use Fr\LS\TwoStepLogin;
 
-class TestUserTwoStepLogin extends PHPUnit_Framework_TestCase
+class TestUserTwoStepLogin extends \PHPUnit\Framework\TestCase
 {
     private static $pdo = null;
 
@@ -48,7 +48,7 @@ class TestUserTwoStepLogin extends PHPUnit_Framework_TestCase
 
     public function setCSRFToken()
     {
-        $_COOKIE['csrf_token'] = LS::rand_string(5);
+        $_COOKIE['csrf_token'] = LS::randStr(5);
     }
 
     public function testUserLogin()

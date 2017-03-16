@@ -2,7 +2,7 @@
 
 use Fr\LS;
 
-class TestUserResetPassword extends PHPUnit_Framework_TestCase
+class TestUserResetPassword extends \PHPUnit\Framework\TestCase
 {
     private static $pdo = null;
 

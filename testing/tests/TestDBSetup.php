@@ -1,5 +1,5 @@
 <?php
-class TestDBSetup extends PHPUnit_Framework_TestCase
+class TestDBSetup extends \PHPUnit\Framework\TestCase
 {
     private $pdo = null;
 
@@ -18,7 +18,7 @@ class TestDBSetup extends PHPUnit_Framework_TestCase
     public function testCreateTables()
     {
         if ($GLOBALS['DB_TYPE'] === 'sqlite') {
-            $sql = file_get_contents(__DIR__ . '/../sql/sqlite.sql');
+            $sql = file_get_contents(__DIR__ . '/../../sql/sqlite.sql');
             $this->pdo->exec($sql);
 
             $sth = $this->pdo->query("SELECT COUNT(1) FROM `sqlite_master` WHERE type='table' AND `name` LIKE 'users'");
@@ -30,7 +30,7 @@ class TestDBSetup extends PHPUnit_Framework_TestCase
             $sth = $this->pdo->query("SELECT COUNT(1) FROM `sqlite_master` WHERE type='table' AND `name` LIKE 'user_tokens'");
             $this->assertEquals(1, $sth->fetchColumn());
         } elseif ($GLOBALS['DB_TYPE'] === 'postgresql') {
-            $sql = file_get_contents(__DIR__ . '/../sql/postgresql.sql');
+            $sql = file_get_contents(__DIR__ . '/../../sql/postgresql.sql');
             $this->pdo->exec($sql);
 
             $sth = $this->pdo->query("SELECT * FROM pg_catalog.pg_tables WHERE tablename = 'users'");
@@ -42,7 +42,7 @@ class TestDBSetup extends PHPUnit_Framework_TestCase
             $sth = $this->pdo->query("SELECT * FROM pg_catalog.pg_tables WHERE tablename = 'user_tokens'");
             $this->assertEquals(1, $sth->rowCount());
         } else {
-            $sql = file_get_contents(__DIR__ . '/../sql/mysql.sql');
+            $sql = file_get_contents(__DIR__ . '/../../sql/mysql.sql');
             $this->pdo->exec($sql);
 
             $sth = $this->pdo->query("SHOW TABLES LIKE 'users'");

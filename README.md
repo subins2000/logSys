@@ -12,7 +12,7 @@ See this [Blog Post](http://subinsb.com/php-logsys) for complete documentation.
 Installation
 ============
 
-Simply download [`LS.php`](https://github.com/subins2000/logSys/blob/master/src/LS.php) file and include it in PHP :
+Simply download [`LS.php`](https://github.com/subins2000/logSys/blob/master/src/Fr/LS.php) file and include it in PHP :
 
 ```php
 <?php
@@ -52,8 +52,8 @@ Contributing
 
 ## Testing
 
-Edit the database configuration inside the `tests/*.xml` files and run :
+Edit the database configuration inside the xml files in `testing` folder and run :
 
 ```
-phpunit -c tests/phpunit.mysql.xml && phpunit -c tests/phpunit.postgresql.xml && phpunit -c tests/phpunit.sqlite.xml
+phpunit -c testing/phpunit.mysql.xml && phpunit -c testing/phpunit.postgresql.xml && phpunit -c testing/phpunit.sqlite.xml
 ```
