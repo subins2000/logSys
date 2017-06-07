@@ -616,9 +616,9 @@ HTML;
             /**
              * Get the user details
              */
-            $userID        = $cols['id'];
-            $user_password = $cols['password'];
-            $status        = (int) $cols['attempt'];
+            $userID        = $cols[$this->config['db']['columns']['id']];
+            $user_password = $cols[$this->config['db']['columns']['password']];
+            $status        = (int) $cols[$this->config['db']['columns']['attempt']];
 
             if (substr($status, 0, 2) === 'b-') {
                 $blockedTime = substr($status, 2);
