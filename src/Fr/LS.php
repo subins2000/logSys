@@ -296,7 +296,7 @@ class LS
     /**
      * @var array
      */
-    private $config = array();
+    protected $config = array();
 
     /**
      * Config
@@ -406,12 +406,12 @@ HTML;
     /**
      * @var PDO Database handler
      */
-    private $dbh;
+    protected $dbh;
 
     /**
      * @var boolean Whether Fr\LS::init() was called
      */
-    private $initCalled = false;
+    protected $initCalled = false;
 
     /**
      * Intialize
@@ -1220,7 +1220,7 @@ HTML;
                 $sql->execute(array($uid));
 
                 if ($cookies) {
-                    $this->login($this->getUser('username', $uid), false, isset($_POST['two_step_login_remember_me']));
+                    $this->login($this->getUser($this->config['db']['columns']['username'], $uid), false, isset($_POST['two_step_login_remember_me']));
                 }
 
                 throw new TwoStepLogin(
@@ -1278,7 +1278,7 @@ HTML;
                         unset($_SESSION['two_step_login_uid']);
 
                         if ($cookies) {
-                            $this->login($this->getUser('username', $uid), false, $remember_me);
+                            $this->login($this->getUser($this->config['db']['columns']['username'], $uid), false, $remember_me);
                         }
 
                         throw new TwoStepLogin(
