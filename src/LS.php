@@ -282,7 +282,7 @@ class LS {
   /**
    * @var array
    */
-  private $config = array();
+  protected $config = array();
 
   /**
    * Config
@@ -399,12 +399,12 @@ class LS {
   /**
    * @var \PDO Database handler
    */
-  private $dbh;
+  protected $dbh;
 
   /**
    * @var boolean Whether Fr\LS::init() was called
    */
-  private $initCalled = false;
+  protected $initCalled = false;
 
   /**
    * Intialize
@@ -964,7 +964,7 @@ class LS {
       $user = $this->userID;
     }
 
-    $created = $this->getUser("created");
+    $created = $this->getUser($this->config["db"]["columns"]["created"]);
     $timeFirst  = strtotime($created);
     $timeSecond = strtotime("now");
     $memsince   = $timeSecond - strtotime($created);
@@ -1064,7 +1064,7 @@ class LS {
          */
         $sql = $this->dbh->prepare("DELETE FROM ". $this->config['db']['token_table'] ." WHERE token = ? AND uid = ?");
         $sql->execute(array($token, $uid));
-        $this->login($this->getUser("username", $uid), false, isset($_POST['logSys_two_step_login-remember_me']));
+        $this->login($this->getUser($this->config["db"]["columns"]["username"], $uid), false, isset($_POST['logSys_two_step_login-remember_me']));
       }
       return true;
     }else if($identification !== "" && $password !== ""){
@@ -1096,7 +1096,7 @@ class LS {
             $sql = $this->dbh->prepare("UPDATE ". $this->config['two_step_login']['devices_table'] ." SET last_access = NOW() WHERE uid = ? AND token = ?");
             $sql->execute(array($uid, $_COOKIE[$this->config["cookies"]["names"]["device"]]));
 
-            $this->login($this->getUser("username", $uid), false, $remember_me);
+            $this->login($this->getUser($this->config["db"]["columns"]["username"], $uid), false, $remember_me);
             return true;
           }
         }
