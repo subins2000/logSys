@@ -325,8 +325,9 @@ class LS
             } elseif ($state === 'notLoggedIn') {
                 return '<h3>Error : Not Logged In</h3>';
             } elseif ($state === 'resetPasswordRequestForm') {
+                $curPageURL = self::curPageURL();
                 return <<<HTML
-<form action='{self::curPageURL()}' method='POST'>
+<form action='{$curPageURL}' method='POST'>
     <label>
         <p>{$extraInfo['identity_type']}</p>
         <input type='text' id='logSysIdentification' placeholder='Enter your {$extraInfo['identity_type']}' size='25' name='identification' />
@@ -335,9 +336,10 @@ class LS
 </form>
 HTML;
             } elseif ($state === 'resetPasswordForm') {
+                $curPageURL = self::curPageURL();
                 return <<<HTML
 <p>The Token key was Authorized. Now, you can change the password</p>
-<form action='{ self::curPageURL() }' method='POST'>
+<form action='{$curPageURL}' method='POST'>
     <input type='hidden' name='token' value='{$extraInfo['resetPassToken']}' />
     <label>
         <p>New Password</p>
