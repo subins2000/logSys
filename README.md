@@ -52,8 +52,10 @@ Contributing
 
 ## Testing
 
-Edit the database configuration inside the xml files in `testing` folder and run :
+First of all do a `composer update` in the main folder. This will install phpunit.
+
+Edit the database configuration in the XML files located in `testing` folder and run :
 
 ```
-phpunit -c testing/phpunit.mysql.xml && phpunit -c testing/phpunit.postgresql.xml && phpunit -c testing/phpunit.sqlite.xml
+vendor/bin/phpunit -c testing/phpunit.mysql.xml && vendor/bin/phpunit -c testing/phpunit.postgresql.xml && vendor/bin/phpunit -c testing/phpunit.sqlite.xml
 ```
