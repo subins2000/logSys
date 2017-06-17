@@ -483,7 +483,7 @@ class LS {
       if( $this->config['features']['remember_me'] === true && $rememberMe && !$this->loggedIn ) {
         $loginToken = hash("sha256", $this->config['keys']['cookie']. $rememberMe . $this->config['keys']['cookie']);
 
-        $this->loggedIn = $loginToken === $loginToken;
+        $this->loggedIn = $loginToken === $cookieToken;
 
         if($this->loggedIn === true){
           $_SESSION[$this->config["cookies"]["names"]["current_user"]] = $rememberMe;
@@ -930,7 +930,7 @@ class LS {
    */
   public function updateUser($toUpdate = array(), $user = null){
     if( is_array($toUpdate) && !isset($toUpdate['id']) ){
-      
+
       if($user === null){
         $user = $this->userID;
       }
