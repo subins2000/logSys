@@ -589,9 +589,9 @@ class LS {
       /**
        * Get the user details
        */
-      $us_id = $cols['id'];
-      $us_pass = $cols['password'];
-      $status = $cols['attempt'];
+      $us_id = $cols[$this->config["db"]["columns"]["id"]];
+      $us_pass = $cols[$this->config["db"]["columns"]["password"]];
+      $status = $cols[$this->config["db"]["columns"]["attempt"]];
 
       if(substr($status, 0, 2) == "b-"){
         $blockedTime = substr($status, 2);
