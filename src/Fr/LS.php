@@ -484,26 +484,42 @@ HTML;
 
             $rememberMe = isset($_COOKIE[$this->config['cookies']['names']['remember_me']]) ? $_COOKIE[$this->config['cookies']['names']['remember_me']] : false;
 
+            if ($rememberMe) {
+                /**
+                 * Remember Me cookie is present. Decrypt its value
+                 * to get the user ID who needs to be remembered
+                 */
+                $rememberMeParts = explode('::', $rememberMe);
+
+                if(count($rememberMeParts) !== 2){
+                    $this->logout();
+                }
+
+                list($rememberMeUser, $iv) = $rememberMeParts;
+                $iv = base64_decode($iv);
+
+                $rememberMe = openssl_decrypt($rememberMeUser, 'AES-128-CBC', $this->config['keys']['cookie'], 0, $iv);
+            }
+
             if ($cookieToken) {
                 $loginToken = hash('sha256', $this->config['keys']['cookie'] . $sessionUID . $this->config['keys']['cookie']);
 
-                $this->loggedIn = $cookieToken === $loginToken;
-            }
+                if ($cookieToken === $loginToken) {
+                    $this->loggedIn = true;
+                } else if ($rememberMe && $this->config['features']['remember_me'] === true) {
+                    /**
+                     * If there is a Remember Me Cookie and the user is not logged in,
+                     * then log in the user with the ID in the remember cookie if it
+                     * matches with the decrypted value in `logSyslogin` cookie
+                     */
+                    $loginTokenFromRememberMeCookie = hash('sha256', $this->config['keys']['cookie'] . $rememberMe . $this->config['keys']['cookie']);
 
-            /**
-             * If there is a Remember Me Cookie and the user is not logged in,
-             * then log in the user with the ID in the remember cookie if it
-             * matches with the decrypted value in `logSyslogin` cookie
-             */
+                    if ($cookieToken === $loginTokenFromRememberMeCookie) {
+                        $this->loggedIn = true;
 
-            if ($this->config['features']['remember_me'] === true && $rememberMe && !$this->loggedIn) {
-                $loginToken = hash('sha256', $this->config['keys']['cookie'] . $rememberMe . $this->config['keys']['cookie']);
-
-                $this->loggedIn = $loginToken === $loginToken;
-
-                if ($this->loggedIn === true) {
-                    $_SESSION[$this->config['cookies']['names']['current_user']] = $rememberMe;
-                    $sessionUID                                                  = $rememberMe;
+                        $_SESSION[$this->config['cookies']['names']['current_user']] = $rememberMe;
+                        $sessionUID                                                  = $rememberMe;
+                    }
                 }
             }
 
@@ -653,9 +669,12 @@ HTML;
                     );
 
                     if ($remember_me === true && $this->config['features']['remember_me'] === true) {
+                        $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length('AES-128-CBC'));
+                        $rememberMeCookie = openssl_encrypt($userID, 'AES-128-CBC', $this->config['keys']['cookie'], 0, $iv) . '::' . base64_encode($iv);
+
                         setcookie(
                             $this->config['cookies']['names']['remember_me'],
-                            $userID,
+                            $rememberMeCookie,
                             strtotime($this->config['cookies']['expire']),
                             $this->config['cookies']['path'],
                             $this->config['cookies']['domain']
