@@ -50,6 +50,10 @@ Contributing
 * Write or modify unit tests for changes you make (if applicable)
 * Run unit tests before pull request.
 
+## Security Bugs
+
+Please report security bugs directly to me via [email](https://subinsb.com/contact).
+
 ## Testing
 
 First of all do a `composer update` in the main folder. This will install phpunit.
