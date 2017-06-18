@@ -12,7 +12,7 @@ See this [Blog Post](http://subinsb.com/php-logsys) for complete documentation.
 Installation
 ============
 
-Simply download [`LS.php`](https://github.com/subins2000/logSys/blob/master/src/LS.php) file and include it in PHP :
+Simply download [`LS.php`](https://github.com/subins2000/logSys/blob/master/src/Fr/LS.php) file and include it in PHP :
 
 ```php
 <?php
@@ -43,11 +43,23 @@ Versions & Upgrading
 
 See [CHANGELOG](https://github.com/subins2000/logSys/blob/master/CHANGELOG.md)
 
-Testing
-=======
+Contributing
+============
 
-Edit the database configuration inside the `tests/*.xml` files and run :
+* Follow [PSR standards](http://www.php-fig.org/psr)
+* Write or modify unit tests for changes you make (if applicable)
+* Run unit tests before pull request.
+
+## Security Bugs
+
+Please report security bugs directly to me via [email](https://subinsb.com/contact).
+
+## Testing
+
+First of all do a `composer update` in the main folder. This will install phpunit.
+
+Edit the database configuration in the XML files located in `testing` folder and run :
 
 ```
-phpunit -c tests/phpunit.mysql.xml && phpunit -c tests/phpunit.postgresql.xml && phpunit -c tests/phpunit.sqlite.xml
+vendor/bin/phpunit -c testing/phpunit.mysql.xml && vendor/bin/phpunit -c testing/phpunit.postgresql.xml && vendor/bin/phpunit -c testing/phpunit.sqlite.xml
 ```

@@ -4,6 +4,23 @@
 
 Each version section also has instructions on how to modify your existing logSys calls to work on the new version.
 
+## 0.9
+
+* 2 Step Login
+    * 2 Step Login process is done now with exceptions
+    * Added `Fr\LS\TwoStepLogin` exception class
+    * Added try limit for entering token. For this `config` -> `two_step_login` -> `token_tries` has been added. Default : 3
+    * Revoking the device which is used by user will force a logout
+* Requesting tokens more than **5** times will cause account to be blocked
+  This can be changed with `config` -> `brute_force` -> `max_tokens`
+* All result from database is regarded [as strings or null](https://phpdelusions.net/pdo#returntypes)
+* Fixed `Fr\LS::joinedSince()` bug
+* Added `Fr\LS::getDeviceID()`
+* Added `Fr\LS::userIDExists()`
+* Added `Fr\LS::removeToken()`
+* Follow PSR standards
+    * Changed `Fr\LS::rand_string()` to `Fr\LS::randStr()`
+
 ## 0.8
 
 * logSys is now an object class. Static methods has been replaced
@@ -37,7 +54,7 @@ The first parameter of all callbacks will be the logSys object passed by referen
 
 ```
 "send_callback" => function($userID, $token){
-  ...
+    ...
 }
 ```
 
@@ -45,7 +62,7 @@ You should replace that with this :
 
 ```
 "send_callback" => function(&$LS, $userID, $token){
-  ...
+    ...
 }
 ```
 
@@ -77,8 +94,8 @@ You should replace that with this :
 - Improved Examples
 - `config` -> `info` is now `config` -> `basic`
 - Added Email Callback so that developer can change the mechanism of sending email
-  Previously, developer had to change the contents of \Fr\LS::sendMail() function
-  Callback can be added in `config` -> `basic` -> `email_callback`
+    Previously, developer had to change the contents of \Fr\LS::sendMail() function
+    Callback can be added in `config` -> `basic` -> `email_callback`
 
 ## 0.4
 

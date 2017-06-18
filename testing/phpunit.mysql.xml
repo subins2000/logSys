@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit backupGlobals="false"
+				 backupStaticAttributes="false"
+				 bootstrap="bootstrap.php"
+				 colors="true"
+				 convertErrorsToExceptions="true"
+				 convertNoticesToExceptions="true"
+				 convertWarningsToExceptions="true"
+				 processIsolation="false"
+				 stopOnFailure="false"
+				 syntaxCheck="false">
+		<testsuites>
+				<testsuite name="Francium logSys Test Suite">
+						<directory suffix=".php">./tests</directory>
+				</testsuite>
+		</testsuites>
+		<php>
+				<var name="DB_TYPE" value="mysql" />
+				<var name="DB_HOST" value="localhost" />
+				<var name="DB_PORT" value="3306" />
+				<var name="DB_USERNAME" value="root" />
+				<var name="DB_PASSWORD" value="" />
+				<var name="DB_NAME" value="tests" />
+		</php>
+</phpunit>

@@ -27,8 +27,8 @@ CREATE TABLE IF NOT EXISTS `user_tokens` (
 --
 
 CREATE TABLE IF NOT EXISTS `user_devices` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `uid` INTEGER NOT NULL,
-  `token` varchar(15) NOT NULL,
-  `last_access` varchar(20) NOT NULL
+	`id` INTEGER PRIMARY KEY AUTOINCREMENT,
+	`uid` INTEGER NOT NULL,
+	`token` varchar(15) NOT NULL,
+	`last_access` varchar(20) NOT NULL
 );
