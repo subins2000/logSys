@@ -19,7 +19,7 @@
 /**
 .---------------------------------------------------------------------------.
 |  Software:      PHP Login System - PHP logSys                             |
-|  Version:       0.0                                                       |
+|  Version:       0.9                                                       |
 |  Documentation: http://subinsb.com/php-logsys                             |
 |  Contribute:    https://github.com/subins2000/logSys                      |
 '---------------------------------------------------------------------------'
