@@ -652,7 +652,7 @@ HTML;
                 } else {
                     // remove the block, because the time limit is over
                     $this->updateUser(array(
-                        'attempt' => '', // No tries at all
+                        $this->config['db']['columns']['attempt'] => '', // No tries at all
                     ), $userID);
                 }
             }
@@ -689,7 +689,7 @@ HTML;
                          * Reset the attempt status
                          */
                         $this->updateUser(array(
-                            'attempt' => '0',
+                            $this->config['db']['columns']['attempt'] => '0',
                         ), $userID);
                     }
 
@@ -718,7 +718,7 @@ HTML;
                     if ($status === '') {
                         // User was not logged in before
                         $this->updateUser(array(
-                            'attempt' => '1', // Tried 1 time
+                            $this->config['db']['columns']['attempt'] => '1', // Tried 1 time
                         ), $userID);
                     } elseif ($status === $max_tries) {
                         /**
@@ -727,7 +727,7 @@ HTML;
                          */
                         $eligible_for_next_login_time = strtotime('+' . $this->config['brute_force']['time_limit'] . ' seconds', time());
                         $this->updateUser(array(
-                            'attempt' => 'b-' . $eligible_for_next_login_time,
+                            $this->config['db']['columns']['attempt'] => 'b-' . $eligible_for_next_login_time,
                         ), $userID);
 
                         return array(
@@ -738,7 +738,7 @@ HTML;
                     } elseif ($status < $max_tries) {
                         // If the attempts are less than Max and not Max
                         $this->updateUser(array(
-                            'attempt' => $status + 1, // Increase the no of tries by +1.
+                            $this->config['db']['columns']['attempt'] => $status + 1, // Increase the no of tries by +1.
                         ), $userID);
                     }
                 }
@@ -1006,7 +1006,7 @@ HTML;
 
         $hashedPassword = password_hash($newPassword . $this->config['keys']['salt'], PASSWORD_DEFAULT);
         $this->updateUser(array(
-            'password' => $hashedPassword,
+            $this->config['db']['columns']['password'] => $hashedPassword,
         ), $userID);
 
         return true;
@@ -1337,7 +1337,7 @@ HTML;
                             $eligible_for_next_login_time = strtotime('+' . $this->config['brute_force']['time_limit'] . ' seconds', time());
 
                             $this->updateUser(array(
-                                'attempt' => 'b-' . $eligible_for_next_login_time,
+                                $this->config['db']['columns']['attempt'] => 'b-' . $eligible_for_next_login_time,
                             ), $uid);
 
                             /**
