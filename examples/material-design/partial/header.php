@@ -1,5 +1,5 @@
-<nav class="nav-extended">
-	<div class="nav-wrapper">
+<nav class="nav-extended row">
+	<div class="nav-wrapper col l12">
 		<a href="index.php" class="brand-logo left" data-ajax>My Site</a>
 		<ul id="nav-mobile" class="right">
 			<?php

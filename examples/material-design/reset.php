@@ -3,50 +3,50 @@ require 'config.php';
 ?>
 <html>
 	<head>
-		<?php printHead( 'Reset Password' );?>
+		<?php printHead('Reset Password');?>
 	</head>
 	<body>
 		<?php
-		showHeader();
-		?>
+        showHeader();
+        ?>
 		<div class="container">
 			<h1>Reset Password</h1>
 			<?php
-			/**
-			 * Custom implementation of Reset Password
-			 */
+            /**
+             * Custom implementation of Reset Password
+             */
 
-			if ( isset( $_GET['resetPassToken'] ) ) {
-				if ( $LS->verifyResetPasswordToken( $_GET['resetPassToken'] ) ) {
-					$msg = array(
-						'color' => 'green',
-						'text'  => <<<HTML
+            if (isset($_GET['resetPassToken'])) {
+                if ($LS->verifyResetPasswordToken($_GET['resetPassToken'])) {
+                    $msg = array(
+                        'color' => 'green',
+                        'text'  => <<<HTML
 
 HTML
-					);
-				} else {
-					$msg = array(
-						'color' => 'red',
-						'text'  => 'Invalid reset token',
-					);
-				}
-			} else {
+                    );
+                } else {
+                    $msg = array(
+                        'color' => 'red',
+                        'text'  => 'Invalid reset token',
+                    );
+                }
+            } else {
 
-				if ( isset( $_POST['identification'] ) ) {
+                if (isset($_POST['identification'])) {
 
-					if ( ! $LS->userExists( $_POST['identification'] ) ) {
-						$msg = array(
-							'color' => 'red',
-							'text'  => 'User does not exist',
-						);
-					} else {
-						$hide_reset_pass_form = true;
-						$uid                  = $LS->login( $_POST['identification'], false, false, false );
+                    if (!$LS->userExists($_POST['identification'])) {
+                        $msg = array(
+                            'color' => 'red',
+                            'text'  => 'User does not exist',
+                        );
+                    } else {
+                        $hide_reset_pass_form = true;
+                        $uid                  = $LS->login($_POST['identification'], false, false, false);
 
-						$LS->sendResetPasswordToken(
-							$uid,
-							function ( $encodedToken, $url ) {
-								return <<<HTML
+                        $LS->sendResetPasswordToken(
+                            $uid,
+                            function ($encodedToken, $url) {
+                                return <<<HTML
 You requested for resetting your password on logSys Demo. For this, please click the following link :
 <blockquote>
 	<a href='{$url}?resetPassToken={$encodedToken}'>Reset Password</a>
@@ -56,13 +56,13 @@ Or you may enter this token in the page :
 	{urldecode($encodedToken)}
 </blockquote>
 HTML;
-							}
-						);
+                            }
+                        );
 
-						$url = Fr\LS::curPageURL();
-						$msg = array(
-							'color' => 'black',
-							'text'  => <<<HTML
+                        $url = Fr\LS::curPageURL();
+                        $msg = array(
+                            'color' => 'black',
+                            'text'  => <<<HTML
 An email with instructions has been sent to you. Check your Email Inbox and SPAM folders. You may follow the link in the email or enter the token below :
 <form action="$url" method="GET">
 	<div class="row">
@@ -78,20 +78,20 @@ An email with instructions has been sent to you. Check your Email Inbox and SPAM
 	</div>
 </form>
 HTML
-						);
-					}
-				}
+                        );
+                    }
+                }
 
-				if ( isset( $msg ) ) {
-					echo <<<HTML
+                if (isset($msg)) {
+                    echo <<<HTML
 <div class="card-panel {$msg['color']}">
 	<span class="white-text">{$msg['text']}</span>
 </div>
 HTML;
-				}
+                }
 
-				if ( ! isset( $hide_reset_pass_form ) ) {
-					?>
+                if (!isset($hide_reset_pass_form)) {
+                    ?>
 					<form action="<?php echo Fr\LS::curPageURL(); ?>" method="POST">
 						<div class="row">
 							<div class="input-field col s12">
@@ -106,9 +106,9 @@ HTML;
 						</div>
 					</form>
 			<?php
-			}
-			}
-			?>
+            }
+            }
+            ?>
 		</div>
 	</body>
 </html>
