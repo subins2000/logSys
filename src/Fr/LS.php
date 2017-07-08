@@ -1117,6 +1117,19 @@ HTML;
     }
 
     /**
+     * Get User ID
+     * @return int|bool
+     */
+    public function getUserID()
+    {
+        if ($this->isLoggedIn()) {
+            return $this->userID;
+        } else {
+            return false;
+        }
+    }
+
+    /**
      * Updates the info of user
      * @param  array  $toUpdate Fields to update
      * @param  [type] $user     User ID
