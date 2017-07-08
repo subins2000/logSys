@@ -23,7 +23,7 @@
 </nav>
 <ul id="dropdown1" class="dropdown-content">
 	<li><a href="home.php" data-ajax>Home</a></li>
-	<li><a href="profile.php?user=<?php echo $LS->userID;?>">Profile</a></li>
+	<li><a href="profile.php?user=<?php echo $LS->getUserID();?>">Profile</a></li>
 	<li class="divider"></li>
 	<li><a href="logout.php">Sign Out</a></li>
 </ul>

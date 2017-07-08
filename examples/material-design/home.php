@@ -26,10 +26,19 @@ if (isset($_POST['newName'])) {
                  $details = $LS->getUser();
                  print_r($details);
                  ?></pre>
-            <p>
-                <a href="change.php" class="btn pink" data-ajax>Change Password</a>
-                <a href="manage-devices.php" class="btn blue" data-ajax>Manage Devices</a>
-            </p>
+            <h2>Security</h2>
+            <p>Manage security of your account</p>
+            <div class="row">
+                <div class="col l4 center">
+                    <a href="change-password.php" class="btn pink" data-ajax>Change Password</a>
+                </div>
+                <div class="col l4 center">
+                    <a href="manage-devices.php" class="btn blue" data-ajax>Manage Devices</a>
+                </div>
+                <div class="col l4 center">
+                    <a href="manage-devices.php#2FA" class="btn red" data-ajax>2 Factor Auth</a>
+                </div>
+            </div>
             <h2>Profile</h2>
             <p>
                 Change the name of your account :
@@ -41,7 +50,7 @@ if (isset($_POST['newName'])) {
                 </div>
             </form>
             <p>
-                <a href="profile.php?user=<?php echo $LS->userID; ?>" class="btn green">See Your Profile</a>
+                <a href="profile.php?user=<?php echo $LS->getUserID(); ?>" class="btn green">See Your Profile</a>
             </p>
         </div>
     </body>

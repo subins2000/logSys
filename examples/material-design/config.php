@@ -26,6 +26,7 @@ $config = array(
     'features' => array(
         'auto_init'      => true,
         'two_step_login' => true,
+        '2FA'            => true,
     ),
 
     /**
@@ -53,6 +54,10 @@ $config = array(
             $email = $LS->getUser('email', $userID);
             $LS->sendMail($email, 'Verify Yourself', 'Someone tried to login to your account. If it was you, then use the following token to complete logging in : <blockquote>' . $token . "</blockquote>If it was not you, then ignore this email and please consider to change your account's password.");
         },
+    ),
+
+    '2FA' => array(
+
     ),
 );
 
