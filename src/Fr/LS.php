@@ -401,12 +401,12 @@ HTML;
     /**
      * @var boolean Is user logged in
      */
-    public $loggedIn = false;
+    protected $loggedIn = false;
 
     /**
      * @var int|boolean User ID
      */
-    public $userID = false;
+    protected $userID = false;
 
     /**
      * @var PDO Database handler
