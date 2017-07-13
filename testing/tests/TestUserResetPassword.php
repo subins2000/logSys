@@ -36,8 +36,8 @@ class TestUserResetPassword extends PHPUnit_Framework_TestCase
             ),
 
             'features' => array(
-                'auto_init'     => false,
-                'start_session' => false,
+                'auto_init' => false,
+                'run_http'  => false,
             ),
 
             'basic' => array(

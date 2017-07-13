@@ -28,8 +28,8 @@ class TestUserBasic extends PHPUnit_Framework_TestCase
                 'name'     => $GLOBALS['DB_NAME'],
             ),
             'features' => array(
-                'auto_init'     => false,
-                'start_session' => false,
+                'auto_init' => false,
+                'run_http'  => false,
             ),
         );
 

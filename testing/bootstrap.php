@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../src/autoload.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 if ($GLOBALS['DB_TYPE'] === 'sqlite') {
     $GLOBALS['DB_SQLITE_PATH'] = tempnam(sys_get_temp_dir(), 'logSysSQLiteDB');

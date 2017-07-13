@@ -4,7 +4,7 @@
  */
 ini_set('display_errors', 'on');
 
-require __DIR__ . '/../../src/autoload.php';
+require __DIR__ . '/../../vendor/autoload.php';
 
 $LS = new \Fr\LS(array(
     'db'       => array(

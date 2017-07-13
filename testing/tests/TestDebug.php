@@ -26,8 +26,8 @@ class TestDebug extends PHPUnit_Framework_TestCase
                 'sqlite_path' => '/file_do_not_exist',
             ),
             'features' => array(
-                'auto_init'     => false,
-                'start_session' => false,
+                'auto_init' => false,
+                'run_http'  => false,
             ),
             'debug'    => array(
                 'enable'   => true,
