@@ -35,7 +35,7 @@ if (isset($_GET['revoke_device']) && $LS->csrf()) {
                 echo <<<HTML
 <table>
     <thead>
-        <th>Session ID</th>
+        <th>Device ID</th>
         <th>Last Accessed</th>
         <th></th>
     </thead>

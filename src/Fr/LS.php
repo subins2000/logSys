@@ -27,6 +27,7 @@
 
 namespace Fr;
 
+use duncan3dc\Sessions\SessionInstance;
 use Fr\LS\TwoStepLogin;
 use PDO;
 use PDOException;
@@ -107,22 +108,28 @@ class LS
          * Enable/Disable certain features
          */
         'features' => array(
-            /**
-             * Should I Call session_start();
-             */
-            'start_session' => true,
+
             /**
              * Enable/Disable Login using Username & E-Mail
              */
-            'email_login'   => true,
+            'email_login' => true,
+
             /**
              * Enable/Disable `Remember Me` feature
              */
-            'remember_me'   => true,
+            'remember_me' => true,
+
+            /**
+             * Should HTTP related functions should be ran.
+             * This includes cookie, session, URL handling.
+             * Useful when logSys is not used in a web app
+             */
+            'run_http' => true,
+
             /**
              * Should \Fr\LS::init() be called automatically
              */
-            'auto_init'     => false,
+            'auto_init' => false,
 
             /**
              * Prevent Brute Forcing
@@ -142,6 +149,7 @@ class LS
              * Useful if the user forgot to logout in some place.
              */
             'two_step_login' => false,
+
         ),
 
         /**
@@ -214,12 +222,7 @@ class LS
                 'login_token' => 'lg',
                 'remember_me' => 'rm',
                 'device'      => 'dv',
-
-                /**
-                 * This is used as $_SESSION key
-                 */
-                'current_user'    => 'cu',
-                'device_verified' => 'dvv',
+                'session'     => 'a',
             ),
         ),
 
@@ -411,6 +414,11 @@ HTML;
     protected $dbh;
 
     /**
+     * @var Session Session Manager
+     */
+    protected $session = false;
+
+    /**
      * @var boolean Whether Fr\LS::init() was called
      */
     protected $initCalled = false;
@@ -423,8 +431,10 @@ HTML;
     {
         $this->config($config);
 
-        if ($this->config['features']['start_session'] === true) {
-            session_start();
+        if ($this->config['features']['run_http']) {
+            $this->session = new SessionInstance(
+                $this->config['cookies']['names']['session']
+            );
         }
 
         /**
@@ -477,10 +487,14 @@ HTML;
 
             $cookieToken = isset($_COOKIE[$this->config['cookies']['names']['login_token']]) ? $_COOKIE[$this->config['cookies']['names']['login_token']] : false;
 
-            /**
-             * @var int|boolean User ID is stored in session
-             */
-            $sessionUID = isset($_SESSION[$this->config['cookies']['names']['current_user']]) ? $_SESSION[$this->config['cookies']['names']['current_user']] : false;
+            if ($this->session) {
+                /**
+                 * @var int User ID is stored in session
+                 */
+                $sessionUID = $this->session->get('user_id');
+            } else {
+                $sessionUID = false;
+            }
 
             $rememberMe = isset($_COOKIE[$this->config['cookies']['names']['remember_me']]) ? $_COOKIE[$this->config['cookies']['names']['remember_me']] : false;
 
@@ -491,12 +505,12 @@ HTML;
                  */
                 $rememberMeParts = explode('::', $rememberMe);
 
-                if(count($rememberMeParts) !== 2){
+                if (count($rememberMeParts) !== 2) {
                     $this->logout();
                 }
 
                 list($rememberMeUser, $iv) = $rememberMeParts;
-                $iv = base64_decode($iv);
+                $iv                        = base64_decode($iv);
 
                 $rememberMe = openssl_decrypt($rememberMeUser, 'AES-128-CBC', $this->config['keys']['cookie'], 0, $iv);
             }
@@ -517,8 +531,8 @@ HTML;
                     if ($cookieToken === $loginTokenFromRememberMeCookie) {
                         $this->loggedIn = true;
 
-                        $_SESSION[$this->config['cookies']['names']['current_user']] = $rememberMe;
-                        $sessionUID                                                  = $rememberMe;
+                        $this->session->set('user_id', $rememberMe);
+                        $sessionUID = $rememberMe;
                     }
                 }
             }
@@ -529,18 +543,29 @@ HTML;
              * Check if devices is authorized to use the account
              */
 
-            if ($this->config['features']['two_step_login'] === true && $this->loggedIn) {
+            if ($this->session && $this->config['features']['two_step_login'] === true && $this->loggedIn) {
                 $login_page = self::curPage() === $this->config['pages']['login_page'];
 
-                if (!isset($_SESSION[$this->config['cookies']['names']['device_verified']]) && !isset($_COOKIE[$this->config['cookies']['names']['device']]) && $login_page === false) {
+                $deviceVerified = $this->session->get('device_verified', false);
+
+                if
+                (
+                    (
+                        !$deviceVerified ||
+                        !isset($_COOKIE[$this->config['cookies']['names']['device']])
+                    ) &&
+                    $login_page === false
+                ) {
                     /**
                      * The device cookie is not even set. So, logout
                      */
                     $this->logout();
-                } elseif ($this->config['two_step_login']['first_check_only'] === false ||
+                } elseif
+                (
+                    $this->config['two_step_login']['first_check_only'] === false ||
                     (
-                        $this->config['two_step_login']['first_check_only'] === true
-                        && !isset($_SESSION[$this->config['cookies']['names']['device_verified']])
+                        $this->config['two_step_login']['first_check_only'] === true &&
+                        !$deviceVerified
                     )
                 ) {
                     $sql = $this->dbh->prepare('SELECT "1" FROM ' . $this->config['two_step_login']['devices_table'] . ' WHERE uid = ? AND token = ?');
@@ -551,13 +576,12 @@ HTML;
                      */
 
                     if ($sql->fetchColumn() !== '1' && $login_page === false) {
-                        setcookie($this->config['cookies']['names']['device'], '', time() - 10);
-                        $this->logout();
+                        $this->logout(true);
                     } else {
                         /**
                          * This session has been checked and verified
                          */
-                        $_SESSION[$this->config['cookies']['names']['device_verified']] = 1;
+                        $this->session->set('device_verified', true);
                     }
                 }
             }
@@ -659,7 +683,7 @@ HTML;
 
             if (!isset($blocked) && ($password === false || password_verify($password . $this->config['keys']['salt'], $user_password))) {
                 if ($cookies === true) {
-                    $_SESSION[$this->config['cookies']['names']['current_user']] = $userID;
+                    $this->session->set('user_id', $userID);
 
                     setcookie(
                         $this->config['cookies']['names']['login_token'],
@@ -669,7 +693,7 @@ HTML;
                     );
 
                     if ($remember_me === true && $this->config['features']['remember_me'] === true) {
-                        $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length('AES-128-CBC'));
+                        $iv               = openssl_random_pseudo_bytes(openssl_cipher_iv_length('AES-128-CBC'));
                         $rememberMeCookie = openssl_encrypt($userID, 'AES-128-CBC', $this->config['keys']['cookie'], 0, $iv) . '::' . base64_encode($iv);
 
                         setcookie(
@@ -796,16 +820,23 @@ HTML;
     /**
      * Logout the user by destroying the cookies and session
      */
-    public function logout()
+    public function logout($removeDeviceCookie = false)
     {
-        session_destroy();
+        $this->session->destroy();
+
         setcookie($this->config['cookies']['names']['login_token'], '', time() - 10, $this->config['cookies']['path'], $this->config['cookies']['domain']);
         setcookie($this->config['cookies']['names']['remember_me'], '', time() - 10, $this->config['cookies']['path'], $this->config['cookies']['domain']);
 
-        /**
-         * Wait for the cookies to be removed, then redirect
-         */
-        usleep(2000);
+        if ($removeDeviceCookie) {
+            setcookie(
+                $this->config['cookies']['names']['device'],
+                '',
+                time() - 10,
+                $this->config['cookies']['path'],
+                $this->config['cookies']['domain']
+            );
+        }
+
         self::redirect($this->config['pages']['login_page']);
 
         return true;
@@ -1184,33 +1215,43 @@ HTML;
      */
     public function twoStepLogin($identification = '', $password = '', $remember_me = false, $cookies = true)
     {
-        if (isset($_POST['two_step_login_token']) && isset($_SESSION['two_step_login_first_step']) && isset($_SESSION['two_step_login_uid']) && $_SESSION['two_step_login_first_step'] === '1') {
+        if ($cookies) {
+            $twoStepLoginSession = $this->session->createNamespace('two_step_login');
+            $twoStepLoginStep    = $twoStepLoginSession->get('step');
+            $twoStepLoginUserID  = $twoStepLoginSession->get('user_id');
+        } else {
+            $twoStepLoginSession =
+            $twoStepLoginStep    =
+            $twoStepLoginUserID  = false;
+        }
+
+        if (isset($_POST['two_step_login_token']) && $twoStepLoginStep === '1' && $twoStepLoginUserID) {
             if (!$this->csrf()) {
                 throw new TwoStepLogin('invalid_csrf_token');
 
                 return;
             }
 
-            $uid   = $_SESSION['two_step_login_uid'];
-            $token = $_POST['two_step_login_token'];
+            $twoStepLoginTries = $twoStepLoginSession->get('tries') + 1;
+            $token             = $_POST['two_step_login_token'];
 
             $sql = $this->dbh->prepare('SELECT COUNT(1) FROM ' . $this->config['db']['token_table'] . ' WHERE token = ? AND uid = ?');
-            $sql->execute(array($token, $uid));
+            $sql->execute(array($token, $twoStepLoginUserID));
 
             if ($sql->fetchColumn() === '0') {
-                if (($_SESSION['two_step_login_token_tries'] + 1) >= $this->config['two_step_login']['token_tries']) {
+                if ($twoStepLoginTries >= $this->config['two_step_login']['token_tries']) {
                     /**
                      * Prevent user from brute forcing the token
                      */
                     $this->logout();
                 } else {
-                    $_SESSION['two_step_login_token_tries']++;
+                    $twoStepLoginSession->set('tries', $twoStepLoginTries);
                 }
 
                 throw new TwoStepLogin(
                     'invalid_token',
                     array(
-                        'tries_left' => $this->config['two_step_login']['token_tries'] - $_SESSION['two_step_login_token_tries'],
+                        'tries_left' => $this->config['two_step_login']['token_tries'] - $twoStepLoginTries,
                     )
                 );
             } else {
@@ -1224,30 +1265,33 @@ HTML;
                     $device_token = self::randStr(10);
 
                     $sth = $this->dbh->prepare('INSERT INTO ' . $this->config['two_step_login']['devices_table'] . ' ( uid, token, last_access ) VALUES ( ?, ?, ? )');
-                    $sth->execute(array($uid, $device_token, time()));
+                    $sth->execute(array($twoStepLoginUserID, $device_token, time()));
 
-                    setcookie($this->config['cookies']['names']['device'], $device_token, strtotime($this->config['two_step_login']['expire']), $this->config['cookies']['path'], $this->config['cookies']['domain']);
-                } else {
-                    /**
-                     * Verify login for this session
-                     */
-                    $_SESSION[$this->config['cookies']['names']['device_verified']] = '1';
+                    setcookie(
+                        $this->config['cookies']['names']['device'],
+                        $device_token,
+                        strtotime($this->config['two_step_login']['expire']),
+                        $this->config['cookies']['path'],
+                        $this->config['cookies']['domain']
+                    );
                 }
 
                 /**
                  * Revoke all tokens of user
                  */
                 $sql = $this->dbh->prepare('DELETE FROM ' . $this->config['db']['token_table'] . ' WHERE uid = ?');
-                $sql->execute(array($uid));
+                $sql->execute(array($twoStepLoginUserID));
 
                 if ($cookies) {
-                    $this->login($this->getUser($this->config['db']['columns']['username'], $uid), false, isset($_POST['two_step_login_remember_me']));
+                    $this->session->set('device_verified', true);
+
+                    $this->login($this->getUser($this->config['db']['columns']['username'], $twoStepLoginUserID), false, isset($_POST['two_step_login_remember_me']));
                 }
 
                 throw new TwoStepLogin(
                     'login_success',
                     array(
-                        'uid' => $uid,
+                        'uid' => $twoStepLoginUserID,
                     )
                 );
             }
@@ -1267,7 +1311,7 @@ HTML;
                 /**
                  * Get the user ID from \Fr\LS::login()
                  */
-                $uid = $login;
+                $twoStepLoginUserID = $login;
 
                 /**
                  * Check if device is verfied so that 2 Step Verification can be skipped
@@ -1275,7 +1319,7 @@ HTML;
 
                 if (isset($_COOKIE[$this->config['cookies']['names']['device']])) {
                     $sql = $this->dbh->prepare('SELECT 1 FROM ' . $this->config['two_step_login']['devices_table'] . ' WHERE uid = ? AND token = ?');
-                    $sql->execute(array($uid, $_COOKIE[$this->config['cookies']['names']['device']]));
+                    $sql->execute(array($twoStepLoginUserID, $_COOKIE[$this->config['cookies']['names']['device']]));
 
                     if ($sql->fetchColumn() === '1') {
                         $verfied = true;
@@ -1286,7 +1330,7 @@ HTML;
                         $sth->execute(
                             array(
                                 time(),
-                                $uid,
+                                $twoStepLoginUserID,
                                 $_COOKIE[$this->config['cookies']['names']['device']],
                             )
                         );
@@ -1294,18 +1338,16 @@ HTML;
                         /**
                          * Delete all session vars used for 2 Step Login
                          */
-                        unset($_SESSION['two_step_login_token_first_step']);
-                        unset($_SESSION['two_step_login_token_tries']);
-                        unset($_SESSION['two_step_login_uid']);
+                        $twoStepLoginSession->delete('step', 'user_id', 'tries');
 
                         if ($cookies) {
-                            $this->login($this->getUser($this->config['db']['columns']['username'], $uid), false, $remember_me);
+                            $this->login($this->getUser($this->config['db']['columns']['username'], $twoStepLoginUserID), false, $remember_me);
                         }
 
                         throw new TwoStepLogin(
                             'login_success',
                             array(
-                                'uid' => $uid,
+                                'uid' => $twoStepLoginUserID,
                             )
                         );
                     }
@@ -1321,13 +1363,17 @@ HTML;
                     /**
                      * The first part of 2 Step Login is completed
                      */
-                    $_SESSION['two_step_login_first_step']  = '1';
-                    $_SESSION['two_step_login_token_tries'] = 0;
-                    $_SESSION['two_step_login_uid']         = $uid;
+                    if ($twoStepLoginSession) {
+                        $twoStepLoginSession->set([
+                            'step'    => '1',
+                            'tries'   => 0,
+                            'user_id' => $twoStepLoginUserID,
+                        ]);
+                    }
 
                     if ($this->config['features']['block_brute_force']) {
                         $sth = $this->dbh->prepare('SELECT COUNT(1) FROM ' . $this->config['db']['token_table'] . ' WHERE uid = ? ');
-                        $sth->execute(array($uid));
+                        $sth->execute(array($twoStepLoginUserID));
 
                         if ($sth->fetchColumn() >= $this->config['brute_force']['max_tokens']) {
                             /**
@@ -1338,17 +1384,17 @@ HTML;
 
                             $this->updateUser(array(
                                 $this->config['db']['columns']['attempt'] => 'b-' . $eligible_for_next_login_time,
-                            ), $uid);
+                            ), $twoStepLoginUserID);
 
                             /**
                              * Delete all 5 tokens
                              */
                             $sth = $this->dbh->prepare('DELETE FROM ' . $this->config['db']['token_table'] . ' WHERE uid = :uid LIMIT :max_tokens');
-                            $sth->bindValue(':uid', $uid);
+                            $sth->bindValue(':uid', $twoStepLoginUserID);
                             $sth->bindValue(':max_tokens', $this->config['brute_force']['max_tokens'], PDO::PARAM_INT);
                             $sth->execute();
 
-                            $_SESSION['two_step_login_first_step'] = '0';
+                            $twoStepLoginSession->set('step', '0');
 
                             $this->logout();
                         }
@@ -1366,20 +1412,18 @@ HTML;
                     $sth->execute(
                         array(
                             $token,
-                            $uid,
+                            $twoStepLoginUserID,
                             time(),
                         )
                     );
 
                     $that = $this;
-                    call_user_func_array($this->config['two_step_login']['send_callback'], array(&$that, $uid, $token));
+                    call_user_func_array($this->config['two_step_login']['send_callback'], array(&$that, $twoStepLoginUserID, $token));
 
                     throw new TwoStepLogin('enter_token_form', array(
                         'remember_me' => $remember_me,
-                        'uid'         => $uid,
+                        'uid'         => $twoStepLoginUserID,
                     ));
-                } else {
-                    self::log('two_step_login: Token Callback not present');
                 }
             }
         }
@@ -1421,12 +1465,9 @@ HTML;
             $sql = $this->dbh->prepare('DELETE FROM ' . $this->config['two_step_login']['devices_table'] . ' WHERE uid = ? AND token = ?');
             $sql->execute(array($this->userID, $device_id));
 
-            if (isset($_SESSION[$this->config['cookies']['names']['device_verified']])) {
-                unset($_SESSION[$this->config['cookies']['names']['device_verified']]);
-            }
-
-            if ($this->getDeviceID() === $device_id) {
-                $this->logout();
+            if ($this->session && $this->getDeviceID() === $device_id) {
+                $this->session->delete('device_verified');
+                $this->logout(true);
             }
 
             return $sql->rowCount() == 1;
