@@ -834,7 +834,6 @@ HTML;
         if ($this->config['features']['run_http']) {
             setcookie($this->config['cookies']['names']['login_token'], '', time() - 10, $this->config['cookies']['path'], $this->config['cookies']['domain']);
             setcookie($this->config['cookies']['names']['remember_me'], '', time() - 10, $this->config['cookies']['path'], $this->config['cookies']['domain']);
-
             if ($removeDeviceCookie) {
                 setcookie(
                     $this->config['cookies']['names']['device'],
@@ -844,7 +843,6 @@ HTML;
                     $this->config['cookies']['domain']
                 );
             }
-
             self::redirect($this->config['pages']['login_page']);
         }
 
