@@ -425,13 +425,16 @@ HTML;
 
     /**
      * Intialize
-     * @param array $config Configuration
+     * @param array                   $config  Configuration
+     * @param boolean|SessionInstance $session Use a session
      */
-    public function __construct($config = array())
+    public function __construct($config = array(), $session = false)
     {
         $this->config($config);
 
-        if ($this->config['features']['run_http']) {
+        if ($session) {
+            $this->session = $session;
+        } else if ($this->config['features']['run_http']) {
             $this->session = new SessionInstance(
                 $this->config['cookies']['names']['session']
             );
