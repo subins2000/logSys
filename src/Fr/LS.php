@@ -507,6 +507,7 @@ HTML;
 
                 if (count($rememberMeParts) !== 2) {
                     $this->logout();
+                    return false;
                 }
 
                 list($rememberMeUser, $iv) = $rememberMeParts;
@@ -560,6 +561,7 @@ HTML;
                      * The device cookie is not even set. So, logout
                      */
                     $this->logout();
+                    return false;
                 } elseif
                 (
                     $this->config['two_step_login']['first_check_only'] === false ||
@@ -577,6 +579,7 @@ HTML;
 
                     if ($sql->fetchColumn() !== '1' && $login_page === false) {
                         $this->logout(true);
+                        return false;
                     } else {
                         /**
                          * This session has been checked and verified
@@ -819,25 +822,29 @@ HTML;
 
     /**
      * Logout the user by destroying the cookies and session
+     * @param  boolean $removeDeviceCookie Should device cookie be removed
+     * @return boolean
      */
     public function logout($removeDeviceCookie = false)
     {
         $this->session->destroy();
 
-        setcookie($this->config['cookies']['names']['login_token'], '', time() - 10, $this->config['cookies']['path'], $this->config['cookies']['domain']);
-        setcookie($this->config['cookies']['names']['remember_me'], '', time() - 10, $this->config['cookies']['path'], $this->config['cookies']['domain']);
+        if ($this->config['features']['run_http']) {
+            setcookie($this->config['cookies']['names']['login_token'], '', time() - 10, $this->config['cookies']['path'], $this->config['cookies']['domain']);
+            setcookie($this->config['cookies']['names']['remember_me'], '', time() - 10, $this->config['cookies']['path'], $this->config['cookies']['domain']);
 
-        if ($removeDeviceCookie) {
-            setcookie(
-                $this->config['cookies']['names']['device'],
-                '',
-                time() - 10,
-                $this->config['cookies']['path'],
-                $this->config['cookies']['domain']
-            );
+            if ($removeDeviceCookie) {
+                setcookie(
+                    $this->config['cookies']['names']['device'],
+                    '',
+                    time() - 10,
+                    $this->config['cookies']['path'],
+                    $this->config['cookies']['domain']
+                );
+            }
+
+            self::redirect($this->config['pages']['login_page']);
         }
-
-        self::redirect($this->config['pages']['login_page']);
 
         return true;
     }
