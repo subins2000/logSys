@@ -509,11 +509,13 @@ HTML;
                 $rememberMeParts = explode('::', urldecode($rememberMe));
 
                 if (count($rememberMeParts) !== 2) {
+                    die('a');
                     $this->logout();
                     return false;
                 }
 
                 list($rememberMeUser, $iv) = $rememberMeParts;
+                $rememberMeUser            = base64_decode($rememberMeUser);
                 $iv                        = base64_decode($iv);
 
                 $rememberMe = openssl_decrypt($rememberMeUser, 'AES-128-CBC', $this->config['keys']['cookie'], 0, $iv);
@@ -554,14 +556,12 @@ HTML;
 
                 if
                 (
-                    (
-                        !$deviceVerified ||
-                        !isset($_COOKIE[$this->config['cookies']['names']['device']])
-                    ) &&
+                    !$deviceVerified &&
+                    !isset($_COOKIE[$this->config['cookies']['names']['device']]) &&
                     $login_page === false
                 ) {
                     /**
-                     * The device cookie is not even set. So, logout
+                     * The device is not verfied for the session
                      */
                     $this->logout();
                     return false;
@@ -700,7 +700,7 @@ HTML;
 
                     if ($remember_me === true && $this->config['features']['remember_me'] === true) {
                         $iv               = openssl_random_pseudo_bytes(openssl_cipher_iv_length('AES-128-CBC'));
-                        $rememberMeCookie = openssl_encrypt($userID, 'AES-128-CBC', $this->config['keys']['cookie'], 0, $iv) . '::' . base64_encode($iv);
+                        $rememberMeCookie = base64_encode(openssl_encrypt($userID, 'AES-128-CBC', $this->config['keys']['cookie'], 0, $iv)) . '::' . base64_encode($iv);
 
                         setcookie(
                             $this->config['cookies']['names']['remember_me'],
