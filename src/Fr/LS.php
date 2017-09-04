@@ -666,7 +666,7 @@ HTML;
              */
             $userID        = $cols[$this->config['db']['columns']['id']];
             $user_password = $cols[$this->config['db']['columns']['password']];
-            $status        = (int) $cols[$this->config['db']['columns']['attempt']];
+            $status        = $cols[$this->config['db']['columns']['attempt']];
 
             if (substr($status, 0, 2) === 'b-') {
                 $blockedTime = substr($status, 2);
@@ -750,7 +750,7 @@ HTML;
                         $this->updateUser(array(
                             $this->config['db']['columns']['attempt'] => '1', // Tried 1 time
                         ), $userID);
-                    } elseif ($status === $max_tries) {
+                    } elseif ((int) $status === $max_tries) {
                         /**
                          * Account Blocked. User will be only able to
                          * re-login at the time in UNIX timestamp
