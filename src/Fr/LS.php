@@ -946,7 +946,7 @@ HTML;
                     $curStatus = 'userNotFound'; // The user with the identity given was not found in the users database
                     echo $this->getOutput($curStatus);
                 } else {
-                    $this->sendResetPasswordToken($cols['id']);
+                    $this->sendResetPasswordToken($cols[$this->config['db']['columns']['id']]);
 
                     echo '<p>An email has been sent to your email inbox with instructions. Check Your Mail Inbox and SPAM Folders.</p><p>You can close this window.</p>';
 
@@ -1126,7 +1126,7 @@ HTML;
      */
     public function updateUser($toUpdate = array(), $user = null)
     {
-        if (is_array($toUpdate) && !isset($toUpdate['id'])) {
+        if (is_array($toUpdate) && !isset($toUpdate[$this->config['db']['columns']['id']])) {
             if ($user === null) {
                 $user = $this->userID;
             }
