@@ -7,6 +7,7 @@ Each version section also has instructions on how to modify your existing logSys
 ## 1.0
 
 * Use non blocking sessions
+* Fix bugs
 
 ## 0.9
 
