@@ -509,7 +509,6 @@ HTML;
                 $rememberMeParts = explode('::', urldecode($rememberMe));
 
                 if (count($rememberMeParts) !== 2) {
-                    die('a');
                     $this->logout();
                     return false;
                 }
