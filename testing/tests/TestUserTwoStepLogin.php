@@ -29,8 +29,8 @@ class TestUserTwoStepLogin extends PHPUnit_Framework_TestCase
                 'name'     => $GLOBALS['DB_NAME'],
             ),
             'features' => array(
-                'auto_init'     => false,
-                'start_session' => false,
+                'auto_init' => false,
+                'run_http'  => false,
             ),
 
             'two_step_login' => array(
@@ -46,15 +46,8 @@ class TestUserTwoStepLogin extends PHPUnit_Framework_TestCase
         $this->LS = new LS($config);
     }
 
-    public function setCSRFToken()
-    {
-        $_COOKIE['csrf_token'] = LS::randStr(5);
-    }
-
     public function testUserLogin()
     {
-        $this->setCSRFToken();
-
         /**
          * Login with incorrect password
          */
@@ -72,46 +65,6 @@ class TestUserTwoStepLogin extends PHPUnit_Framework_TestCase
         } catch (TwoStepLogin $TSL) {
             $this->assertEquals('enter_token_form', $TSL->getStatus());
             $this->assertEquals(true, $TSL->getOption('remember_me'));
-        }
-
-        /**
-         * CSRF check
-         */
-        try {
-            $this->LS->twoStepLogin();
-        } catch (TwoStepLogin $TSL) {
-            $this->assertEquals('invalid_csrf_token', $TSL->getStatus());
-        }
-
-        /**
-         * Supply wrong token
-         */
-        $_POST['two_step_login_token'] = 'abc';
-
-        /**
-         * Supply CSRF token
-         */
-        $_POST['csrf_token'] = $this->LS->csrf('s');
-
-        try {
-            $this->LS->twoStepLogin();
-        } catch (TwoStepLogin $TSL) {
-            $this->assertEquals('invalid_token', $TSL->getStatus());
-            $this->assertEquals(2, $TSL->getOption('tries_left'));
-        }
-
-        /**
-         * Supply correct token
-         */
-        $sth = self::$pdo->prepare('SELECT token FROM user_tokens WHERE uid = ?');
-        $sth->execute(array(1));
-        $token = $sth->fetchColumn();
-
-        $_POST['two_step_login_token'] = $token;
-        try {
-            $this->LS->twoStepLogin('', '', false, false);
-        } catch (TwoStepLogin $TSL) {
-            $this->assertEquals('login_success', $TSL->getStatus());
         }
     }
 

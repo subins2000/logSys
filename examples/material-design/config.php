@@ -4,7 +4,7 @@
  */
 ini_set('display_errors', 'on');
 
-require __DIR__ . '/../../src/autoload.php';
+require __DIR__ . '/../../vendor/autoload.php';
 
 date_default_timezone_set('UTC');
 

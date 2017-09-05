@@ -121,7 +121,7 @@ HTML;
 						</div>
 					</div>
 					<div>
-						<input type='checkbox' id='remember_me' checked='checked' />
+						<input type='checkbox' checked='checked' id='remember_me' name='remember_me' />
 						<label for='remember_me'>Remember Me</label>
 					</div>
 					<div class='row'>

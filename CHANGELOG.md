@@ -4,6 +4,11 @@
 
 Each version section also has instructions on how to modify your existing logSys calls to work on the new version.
 
+## 1.0
+
+* Use non blocking sessions
+* Fix bugs
+
 ## 0.9
 
 * 2 Step Login
