@@ -4,7 +4,7 @@
 	"description": "PHP Secure, Advanced Login System",
 	"keywords": ["login","register", "secure"],
 	"homepage": "http://subinsb.com/php-logsys",
-	"license": "Apache 2.0",
+	"license": "Apache-2.0",
 	"authors": [
 		{
 			"name": "Subin Siby",
