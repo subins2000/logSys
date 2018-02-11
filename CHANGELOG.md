@@ -4,7 +4,15 @@
 
 Each version section also has instructions on how to modify your existing logSys calls to work on the new version.
 
-## 1.0
+## 1.0 Series
+
+### 1.0.1
+
+* Fix #36
+* Fix composer.json
+* Fix LS.php version code
+
+### 1.0
 
 * Use non blocking sessions
 * Fix bugs
