@@ -19,7 +19,7 @@
 /**
 .---------------------------------------------------------------------------.
 |  Software:      PHP Login System - PHP logSys                             |
-|  Version:       0.9.1                                                     |
+|  Version:       1.0.1                                                     |
 |  Documentation: http://subinsb.com/php-logsys                             |
 |  Contribute:    https://github.com/subins2000/logSys                      |
 '---------------------------------------------------------------------------'
@@ -506,7 +506,7 @@ HTML;
                  * Remember Me cookie is present. Decrypt its value
                  * to get the user ID who needs to be remembered
                  */
-                $rememberMeParts = explode('::', urldecode($rememberMe));
+                $rememberMeParts = explode(':|:', urldecode($rememberMe));
 
                 if (count($rememberMeParts) !== 2) {
                     $this->logout();
@@ -699,7 +699,7 @@ HTML;
 
                     if ($remember_me === true && $this->config['features']['remember_me'] === true) {
                         $iv               = openssl_random_pseudo_bytes(openssl_cipher_iv_length('AES-128-CBC'));
-                        $rememberMeCookie = base64_encode(openssl_encrypt($userID, 'AES-128-CBC', $this->config['keys']['cookie'], 0, $iv)) . '::' . base64_encode($iv);
+                        $rememberMeCookie = base64_encode(openssl_encrypt($userID, 'AES-128-CBC', $this->config['keys']['cookie'], 0, $iv)) . ':|:' . base64_encode($iv);
 
                         setcookie(
                             $this->config['cookies']['names']['remember_me'],
@@ -946,7 +946,7 @@ HTML;
                     $curStatus = 'userNotFound'; // The user with the identity given was not found in the users database
                     echo $this->getOutput($curStatus);
                 } else {
-                    $this->sendResetPasswordToken($cols['id']);
+                    $this->sendResetPasswordToken($cols[$this->config['db']['columns']['id']]);
 
                     echo '<p>An email has been sent to your email inbox with instructions. Check Your Mail Inbox and SPAM Folders.</p><p>You can close this window.</p>';
 
@@ -1126,7 +1126,7 @@ HTML;
      */
     public function updateUser($toUpdate = array(), $user = null)
     {
-        if (is_array($toUpdate) && !isset($toUpdate['id'])) {
+        if (is_array($toUpdate) && !isset($toUpdate[$this->config['db']['columns']['id']])) {
             if ($user === null) {
                 $user = $this->userID;
             }
