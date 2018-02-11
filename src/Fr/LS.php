@@ -506,7 +506,7 @@ HTML;
                  * Remember Me cookie is present. Decrypt its value
                  * to get the user ID who needs to be remembered
                  */
-                $rememberMeParts = explode('::', urldecode($rememberMe));
+                $rememberMeParts = explode(':|:', urldecode($rememberMe));
 
                 if (count($rememberMeParts) !== 2) {
                     $this->logout();
@@ -699,7 +699,7 @@ HTML;
 
                     if ($remember_me === true && $this->config['features']['remember_me'] === true) {
                         $iv               = openssl_random_pseudo_bytes(openssl_cipher_iv_length('AES-128-CBC'));
-                        $rememberMeCookie = base64_encode(openssl_encrypt($userID, 'AES-128-CBC', $this->config['keys']['cookie'], 0, $iv)) . '::' . base64_encode($iv);
+                        $rememberMeCookie = base64_encode(openssl_encrypt($userID, 'AES-128-CBC', $this->config['keys']['cookie'], 0, $iv)) . ':|:' . base64_encode($iv);
 
                         setcookie(
                             $this->config['cookies']['names']['remember_me'],
