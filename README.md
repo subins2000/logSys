@@ -12,14 +12,7 @@ See this [Blog Post](http://subinsb.com/php-logsys) for complete documentation.
 Installation
 ============
 
-Simply download [`LS.php`](https://github.com/subins2000/logSys/blob/master/src/Fr/LS.php) file and include it in PHP :
-
-```php
-<?php
-require_once "LS.php";
-```
-
-or use [Composer](http://getcomposer.org) :
+Use [Composer](http://getcomposer.org) :
 
 ```bash
 composer require francium/logsys
