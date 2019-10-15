@@ -514,8 +514,8 @@ HTML;
                 }
 
                 list($rememberMeUser, $iv) = $rememberMeParts;
-                $rememberMeUser            = base64_decode($rememberMeUser);
-                $iv                        = base64_decode($iv);
+                $rememberMeUser            = base64_decode($rememberMeUser,TRUE);
+                $iv                        = base64_decode($iv,TRUE);
 
                 $rememberMe = openssl_decrypt($rememberMeUser, 'AES-128-CBC', $this->config['keys']['cookie'], 0, $iv);
             }
