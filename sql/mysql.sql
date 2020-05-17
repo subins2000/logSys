@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 CREATE TABLE IF NOT EXISTS `user_tokens` (
 	`token` varchar(40) NOT NULL COMMENT 'The generated unique token',
 	`uid` int(11) NOT NULL COMMENT 'The User ID',
-	`requested` varchar(20) NOT NULL COMMENT 'The date when token was created'
+	`requested` varchar(20) NOT NULL COMMENT 'The date when token was created',
 	PRIMARY KEY (`token`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
